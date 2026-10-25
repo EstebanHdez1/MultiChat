@@ -630,15 +630,17 @@ QByteArray LocalWebServer::getIndexHtml() const
 
     .chat-row {
       display: block;
-      padding: 2px 4px;
+      padding: 3px 6px;
       line-height: 1.5;
       word-break: break-word;
       font-size: 14px;
       animation: fadeIn 0.15s ease-out;
-      border-radius: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
     }
     .chat-row:hover {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.06);
     }
 
     @keyframes fadeIn {
@@ -815,6 +817,150 @@ QByteArray LocalWebServer::getIndexHtml() const
     .scroll-btn.visible {
       display: inline-flex;
     }
+
+    /* Message Detail Modal (Popup on click) */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      padding: 16px;
+      animation: fadeIn 0.15s ease-out;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-card {
+      background: #141824;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transform: scale(0.97);
+      animation: popIn 0.15s ease-out forwards;
+    }
+    @keyframes popIn {
+      to { transform: scale(1); }
+    }
+    .modal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 10px;
+    }
+    .modal-plat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .modal-plat-badge svg {
+      width: 16px;
+      height: 16px;
+    }
+    .modal-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #94A3B8;
+      margin-left: auto;
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: #94A3B8;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .modal-close-btn:hover {
+      color: #FFF;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .modal-username {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      word-break: break-word;
+    }
+    .modal-extra {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      align-self: flex-start;
+    }
+    .modal-message-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .modal-message-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748B;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+    .modal-message-text {
+      font-size: 15px;
+      line-height: 1.5;
+      color: #F3F4F6;
+      word-break: break-word;
+      user-select: text;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 4px;
+    }
+    .btn-copy-modal {
+      background: #2563EB;
+      color: #FFF;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .btn-copy-modal:hover {
+      background: #1D4ED8;
+    }
+    .btn-copy-modal svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
   </style>
 </head>
 <body>
@@ -853,6 +999,29 @@ QByteArray LocalWebServer::getIndexHtml() const
     <svg viewBox="0 0 24 24"><path d="M11 4h2v12l4-4 1.4 1.4L12 20l-6.4-6.6L7 12l4 4V4z"/></svg>
     Nuevos mensajes
   </button>
+
+  <!-- Message Detail Modal -->
+  <div class="modal-backdrop" id="msgModal">
+    <div class="modal-card">
+      <div class="modal-top">
+        <div class="modal-plat-badge" id="modalPlatBadge"></div>
+        <div class="modal-time" id="modalTime"></div>
+        <button class="modal-close-btn" id="modalCloseBtn" title="Cerrar">&times;</button>
+      </div>
+      <div class="modal-username" id="modalUser"></div>
+      <div class="modal-extra" id="modalExtra" style="display:none;"></div>
+      <div class="modal-message-box">
+        <div class="modal-message-label">MENSAJE</div>
+        <div class="modal-message-text" id="modalText"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-copy-modal" id="modalCopyBtn">
+          <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          <span id="copyBtnText">Copiar Mensaje</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const isOverlay = new URLSearchParams(window.location.search).get('overlay') === 'true' || window.location.pathname.includes('/overlay');
@@ -1088,8 +1257,12 @@ QByteArray LocalWebServer::getIndexHtml() const
       row.dataset.type = msgTypeKey;
 
       row.innerHTML = `
-        <span class="msg-time">[${time}]</span><span class="badge-platform ${platformKey}">${platformIcon}</span><span class="msg-user" style="color: ${userColor}">${escapeHtml(msg.displayName || msg.username)}:</span><span class="msg-body">${highlightBadge}${formatMessageText(msg.message, msg.emotes)}</span>
+        <span class="msg-time">[${time}]</span><span class="badge-platform ${platformKey}">${platformIcon}</span><span class="msg-user" style="color: ${userColor}">${escapeHtml(msg.displayName || msg.username)}:</span> <span class="msg-body">${highlightBadge}${formatMessageText(msg.message, msg.emotes)}</span>
       `;
+
+      row.addEventListener('click', () => {
+        openMessageModal(msg);
+      });
 
       // Check current filters
       let visible = true;
@@ -1164,6 +1337,87 @@ QByteArray LocalWebServer::getIndexHtml() const
         });
       }
       return safe;
+    }
+
+    // Message Modal Popup Logic
+    const msgModal = document.getElementById('msgModal');
+    const modalUser = document.getElementById('modalUser');
+    const modalTime = document.getElementById('modalTime');
+    const modalPlatBadge = document.getElementById('modalPlatBadge');
+    const modalExtra = document.getElementById('modalExtra');
+    const modalText = document.getElementById('modalText');
+    const modalCopyBtn = document.getElementById('modalCopyBtn');
+    const copyBtnText = document.getElementById('copyBtnText');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    let currentModalText = '';
+
+    function openMessageModal(msg) {
+      if (!msgModal) return;
+      currentModalText = msg.message || '';
+      modalUser.textContent = msg.displayName || msg.username || 'Usuario';
+      modalUser.style.color = msg.userColor || '#818CF8';
+      modalTime.textContent = msg.formattedTime || (msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '');
+
+      const platformKey = (msg.platform || 'kick').toLowerCase();
+      const platformIcon = platformSvgs[platformKey] || platformSvgs.kick;
+      modalPlatBadge.innerHTML = `${platformIcon} <span>${escapeHtml(msg.platform || '')}</span>`;
+
+      if (msg.isDonation || msg.type === 1) {
+        modalExtra.style.display = 'inline-flex';
+        modalExtra.className = 'modal-extra pill-highlight donation';
+        modalExtra.innerHTML = `${actionSvgs.gift} Donación: ${(msg.donationAmount || 0).toFixed(2)} ${escapeHtml(msg.currency || '')}`;
+      } else if (msg.type === 2) {
+        modalExtra.style.display = 'inline-flex';
+        modalExtra.className = 'modal-extra pill-highlight gift';
+        modalExtra.innerHTML = `${actionSvgs.gift} Regalo: ${escapeHtml(msg.giftName || 'Regalo')} (x${msg.giftCount || 1})`;
+      } else if (msg.type === 3) {
+        modalExtra.style.display = 'inline-flex';
+        modalExtra.className = 'modal-extra pill-highlight subscription';
+        modalExtra.innerHTML = `${actionSvgs.star} Suscripción`;
+      } else {
+        modalExtra.style.display = 'none';
+      }
+
+      modalText.textContent = msg.message || '';
+      if (copyBtnText) copyBtnText.textContent = 'Copiar Mensaje';
+      msgModal.classList.add('open');
+    }
+
+    if (modalCloseBtn) {
+      modalCloseBtn.addEventListener('click', () => {
+        msgModal.classList.remove('open');
+      });
+    }
+
+    if (msgModal) {
+      msgModal.addEventListener('click', (e) => {
+        if (e.target === msgModal) msgModal.classList.remove('open');
+      });
+    }
+
+    if (modalCopyBtn) {
+      modalCopyBtn.addEventListener('click', () => {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(currentModalText).then(() => {
+            if (copyBtnText) copyBtnText.textContent = '¡Copiado!';
+            setTimeout(() => {
+              if (copyBtnText) copyBtnText.textContent = 'Copiar Mensaje';
+            }, 1800);
+          }).catch(() => {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = currentModalText;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (copyBtnText) copyBtnText.textContent = '¡Copiado!';
+            setTimeout(() => {
+              if (copyBtnText) copyBtnText.textContent = 'Copiar Mensaje';
+            }, 1800);
+          });
+        }
+      });
     }
 
     connectWs();

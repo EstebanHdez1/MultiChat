@@ -1,6 +1,6 @@
 param(
-    [string]$OutputDir = "release\MultiChat-v1.2.0-Portable",
-    [string]$ZipName = "release\MultiChat-v1.2.0-Windows-Portable.zip"
+    [string]$OutputDir = "release\MultiChat-v1.3.0-Portable",
+    [string]$ZipName = "release\MultiChat-v1.3.0-Windows-Portable.zip"
 )
 
 $ErrorActionPreference = "Stop"

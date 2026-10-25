@@ -14,6 +14,9 @@
 #include <QNetworkReply>
 #include <QTextDocument>
 #include <QFrame>
+#include <QDialog>
+#include <QClipboard>
+#include <QGuiApplication>
 #include <algorithm>
 
 namespace
@@ -214,7 +217,7 @@ void ChatWidget::setupUi()
     mainLayout->addWidget(m_filterBar);
 
     // Chat Browser
-    m_chatBrowser->setOpenExternalLinks(true);
+    m_chatBrowser->setOpenExternalLinks(false);
     m_chatBrowser->setReadOnly(true);
     m_chatBrowser->setStyleSheet(
         "QTextBrowser {"
@@ -224,7 +227,9 @@ void ChatWidget::setupUi()
         "  padding: 10px;"
         "  color: #F3F4F6;"
         "}"
+        "a { text-decoration: none; color: inherit; }"
     );
+    connect(m_chatBrowser, &QTextBrowser::anchorClicked, this, &ChatWidget::onMessageAnchorClicked);
     mainLayout->addWidget(m_chatBrowser, 1);
 
     // Transient Notifications Container (Placed at bottom, below chat)
@@ -368,8 +373,8 @@ void ChatWidget::showTransientEvent(const ChatMessage& msg)
     timeLabel->setStyleSheet("color: #9CA3AF; font-size: 10px; font-family: monospace;");
     toastLayout->addWidget(timeLabel);
 
-    // Max 3 visible at the same time
-    while (m_transientLayout->count() >= 3)
+    // Only keep at most 1 visible toast at any time so the chat isn't squished or scrolled up
+    while (m_transientLayout->count() > 0)
     {
         QLayoutItem* oldItem = m_transientLayout->takeAt(0);
         if (oldItem && oldItem->widget())
@@ -382,14 +387,26 @@ void ChatWidget::showTransientEvent(const ChatMessage& msg)
     m_transientLayout->addWidget(toast);
     m_transientContainer->show();
 
+    // Auto-scroll to keep bottom-most chat comment completely visible
+    if (m_autoScroll)
+    {
+        QTimer::singleShot(25, this, [this]() {
+            m_chatBrowser->verticalScrollBar()->setValue(m_chatBrowser->verticalScrollBar()->maximum());
+        });
+    }
+
     // Auto-dismiss using configured duration
-    int durationMs = qBound(1000, static_cast<int>((m_style.transientDurationSec > 0.0 ? m_style.transientDurationSec : 4.5) * 1000), 30000);
+    int durationMs = qBound(1000, static_cast<int>((m_style.transientDurationSec > 0.0 ? m_style.transientDurationSec : 3.5) * 1000), 20000);
     QTimer::singleShot(durationMs, toast, [this, toast]() {
         toast->deleteLater();
-        QTimer::singleShot(60, this, [this]() {
+        QTimer::singleShot(40, this, [this]() {
             if (m_transientLayout->count() == 0)
             {
                 m_transientContainer->hide();
+            }
+            if (m_autoScroll)
+            {
+                m_chatBrowser->verticalScrollBar()->setValue(m_chatBrowser->verticalScrollBar()->maximum());
             }
         });
     });
@@ -544,7 +561,7 @@ QString ChatWidget::formatMessageHtml(const ChatMessage& msg)
     if (m_style.showUsernames)
     {
         QString nameColor = msg.userColor.isEmpty() ? m_style.usernameColor : msg.userColor;
-        nameHtml = QString("<span style=\"color: %1; font-weight: bold; margin-right: 6px;\">%2:</span>")
+        nameHtml = QString("<span style=\"color: %1; font-weight: bold;\">%2:&nbsp;</span>")
             .arg(nameColor, msg.displayName.toHtmlEscaped());
     }
 
@@ -587,15 +604,18 @@ QString ChatWidget::formatMessageHtml(const ChatMessage& msg)
             .arg(m_style.textColor, formatMessageBodyHtml(msg));
     }
 
+    QString content = QString("%1%2%3%4").arg(timeHtml, badgeHtml, nameHtml, bodyHtml);
+    QString link = QString("<a href=\"msg:%1\" style=\"text-decoration: none; color: inherit;\">%2</a>").arg(msg.id, content);
+
     if (!containerStyle.isEmpty())
     {
-        return QString("<div style=\"%1\">%2%3%4%5</div>")
-            .arg(containerStyle, timeHtml, badgeHtml, nameHtml, bodyHtml);
+        return QString("<div style=\"%1\">%2</div>")
+            .arg(containerStyle, link);
     }
     else
     {
-        return QString("<div style=\"margin: 2px 0; line-height: 1.4;\">%1%2%3%4</div>")
-            .arg(timeHtml, badgeHtml, nameHtml, bodyHtml);
+        return QString("<div style=\"margin: 2px 0; line-height: 1.4;\">%1</div>")
+            .arg(link);
     }
 }
 
@@ -814,4 +834,178 @@ void ChatWidget::onSimulateEventClicked()
     }
 
     EventManager::instance().postChatMessage(msg);
+}
+
+void ChatWidget::onMessageAnchorClicked(const QUrl& url)
+{
+    if (url.scheme() == "msg")
+    {
+        QString msgId = url.path();
+        if (msgId.isEmpty())
+        {
+            msgId = url.toString().mid(4); // strip "msg:"
+        }
+        ChatMessage msg = ChatManager::instance().getMessageById(msgId);
+        if (!msg.id.isEmpty())
+        {
+            showMessageDetailDialog(msg);
+        }
+    }
+    else if (url.scheme() == "http" || url.scheme() == "https")
+    {
+        QDesktopServices::openUrl(url);
+    }
+}
+
+void ChatWidget::showMessageDetailDialog(const ChatMessage& msg)
+{
+    auto* dialog = new QDialog(this);
+    dialog->setWindowTitle("Detalle del Mensaje");
+    dialog->setModal(true);
+    dialog->setMinimumWidth(380);
+    dialog->setMaximumWidth(520);
+    dialog->setStyleSheet(
+        "QDialog { background-color: #111827; border: 1px solid #374151; border-radius: 12px; }"
+        "QLabel { background: transparent; border: none; }"
+    );
+
+    auto* layout = new QVBoxLayout(dialog);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setSpacing(14);
+
+    // Top Row: Platform Icon + Badge + Timestamp
+    auto* topRow = new QHBoxLayout();
+    topRow->setSpacing(8);
+
+    QString iconPath = ":/icons/tiktok.svg";
+    QString platColor = "#FE2C55";
+    if (msg.platform.compare("Twitch", Qt::CaseInsensitive) == 0) { iconPath = ":/icons/twitch.svg"; platColor = "#9146FF"; }
+    else if (msg.platform.compare("YouTube", Qt::CaseInsensitive) == 0) { iconPath = ":/icons/youtube.svg"; platColor = "#EF4444"; }
+    else if (msg.platform.compare("Kick", Qt::CaseInsensitive) == 0) { iconPath = ":/icons/kick.svg"; platColor = "#53FC18"; }
+
+    auto* platIcon = new QLabel(dialog);
+    platIcon->setPixmap(QIcon(iconPath).pixmap(18, 18));
+    topRow->addWidget(platIcon);
+
+    auto* platName = new QLabel(msg.platform.toUpper(), dialog);
+    platName->setStyleSheet(QString("font-size: 12px; font-weight: 800; color: %1; letter-spacing: 0.8px;").arg(platColor));
+    topRow->addWidget(platName);
+
+    topRow->addStretch();
+
+    auto* timeLbl = new QLabel(msg.formattedTime("HH:mm:ss - dd/MM/yyyy"), dialog);
+    timeLbl->setStyleSheet("font-family: monospace; font-size: 11px; color: #94A3B8;");
+    topRow->addWidget(timeLbl);
+    layout->addLayout(topRow);
+
+    // User Name (Large)
+    QString userColor = msg.userColor.isEmpty() ? platColor : msg.userColor;
+    auto* userLbl = new QLabel(msg.displayName.isEmpty() ? msg.username : msg.displayName, dialog);
+    userLbl->setStyleSheet(QString("font-size: 22px; font-weight: 800; color: %1;").arg(userColor));
+    userLbl->setWordWrap(true);
+    userLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    layout->addWidget(userLbl);
+
+    // If Donation / Gift / Sub Highlight
+    if (msg.isDonation || msg.type == MessageType::DONATION)
+    {
+        auto* donFrame = new QFrame(dialog);
+        donFrame->setStyleSheet("background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 6px 10px;");
+        auto* donLayout = new QHBoxLayout(donFrame);
+        donLayout->setContentsMargins(6, 4, 6, 4);
+        auto* donIcon = new QLabel(donFrame);
+        donIcon->setPixmap(QIcon(":/icons/gift.svg").pixmap(16, 16));
+        auto* donText = new QLabel(QString("Donación: %1 %2").arg(QString::number(msg.donationAmount, 'f', 2), msg.currency), donFrame);
+        donText->setStyleSheet("color: #FBBF24; font-weight: 700; font-size: 13px;");
+        donLayout->addWidget(donIcon);
+        donLayout->addWidget(donText);
+        donLayout->addStretch();
+        layout->addWidget(donFrame);
+    }
+    else if (msg.type == MessageType::GIFT)
+    {
+        auto* giftFrame = new QFrame(dialog);
+        giftFrame->setStyleSheet("background: rgba(254, 44, 85, 0.15); border: 1px solid rgba(254, 44, 85, 0.4); border-radius: 6px; padding: 6px 10px;");
+        auto* giftLayout = new QHBoxLayout(giftFrame);
+        giftLayout->setContentsMargins(6, 4, 6, 4);
+        auto* giftIcon = new QLabel(giftFrame);
+        giftIcon->setPixmap(QIcon(":/icons/gift.svg").pixmap(16, 16));
+        auto* giftText = new QLabel(QString("Regalo: %1 (x%2)").arg(msg.giftName.isEmpty() ? "Regalo" : msg.giftName).arg(msg.giftCount), giftFrame);
+        giftText->setStyleSheet("color: #FDA4AF; font-weight: 700; font-size: 13px;");
+        giftLayout->addWidget(giftIcon);
+        giftLayout->addWidget(giftText);
+        giftLayout->addStretch();
+        layout->addWidget(giftFrame);
+    }
+    else if (msg.type == MessageType::SUBSCRIPTION)
+    {
+        auto* subFrame = new QFrame(dialog);
+        subFrame->setStyleSheet("background: rgba(145, 70, 255, 0.15); border: 1px solid rgba(145, 70, 255, 0.4); border-radius: 6px; padding: 6px 10px;");
+        auto* subLayout = new QHBoxLayout(subFrame);
+        subLayout->setContentsMargins(6, 4, 6, 4);
+        auto* subIcon = new QLabel(subFrame);
+        subIcon->setPixmap(QIcon(":/icons/star.svg").pixmap(16, 16));
+        auto* subText = new QLabel("Suscripción al canal", subFrame);
+        subText->setStyleSheet("color: #C084FC; font-weight: 700; font-size: 13px;");
+        subLayout->addWidget(subIcon);
+        subLayout->addWidget(subText);
+        subLayout->addStretch();
+        layout->addWidget(subFrame);
+    }
+
+    // Message Content Box
+    auto* msgBox = new QFrame(dialog);
+    msgBox->setStyleSheet("background-color: #1F2937; border: 1px solid #374151; border-radius: 8px; padding: 12px;");
+    auto* msgBoxLayout = new QVBoxLayout(msgBox);
+    msgBoxLayout->setContentsMargins(10, 10, 10, 10);
+    msgBoxLayout->setSpacing(6);
+
+    auto* msgHeader = new QLabel("MENSAJE", msgBox);
+    msgHeader->setStyleSheet("font-size: 10px; font-weight: 700; color: #64748B; letter-spacing: 0.8px;");
+    msgBoxLayout->addWidget(msgHeader);
+
+    auto* msgText = new QLabel(msg.message, msgBox);
+    msgText->setStyleSheet("font-size: 15px; color: #F3F4F6; line-height: 1.4;");
+    msgText->setWordWrap(true);
+    msgText->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    msgBoxLayout->addWidget(msgText);
+    layout->addWidget(msgBox);
+
+    // Actions Row (Copy Message, Copy User, Close)
+    auto* actRow = new QHBoxLayout();
+    actRow->setSpacing(8);
+
+    auto* btnCopyMsg = new QPushButton("Copiar Mensaje", dialog);
+    btnCopyMsg->setIcon(QIcon(":/icons/copy.svg"));
+    btnCopyMsg->setFixedHeight(32);
+    btnCopyMsg->setCursor(Qt::PointingHandCursor);
+    btnCopyMsg->setStyleSheet(
+        "QPushButton { background: #2563EB; color: white; border: none; border-radius: 6px; padding: 0 14px; font-weight: 600; font-size: 12px; }"
+        "QPushButton:hover { background: #1D4ED8; }"
+    );
+    connect(btnCopyMsg, &QPushButton::clicked, dialog, [btnCopyMsg, msg]() {
+        QGuiApplication::clipboard()->setText(msg.message);
+        btnCopyMsg->setText("¡Copiado!");
+        QTimer::singleShot(1500, btnCopyMsg, [btnCopyMsg]() {
+            btnCopyMsg->setText("Copiar Mensaje");
+        });
+    });
+    actRow->addWidget(btnCopyMsg);
+
+    actRow->addStretch();
+
+    auto* btnClose = new QPushButton("Cerrar", dialog);
+    btnClose->setFixedHeight(32);
+    btnClose->setCursor(Qt::PointingHandCursor);
+    btnClose->setStyleSheet(
+        "QPushButton { background: #374151; color: #E5E7EB; border: none; border-radius: 6px; padding: 0 14px; font-weight: 500; font-size: 12px; }"
+        "QPushButton:hover { background: #4B5563; }"
+    );
+    connect(btnClose, &QPushButton::clicked, dialog, &QDialog::accept);
+    actRow->addWidget(btnClose);
+
+    layout->addLayout(actRow);
+
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->exec();
 }

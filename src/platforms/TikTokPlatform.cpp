@@ -13,6 +13,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QSettings>
 #include <zlib.h>
 
 #ifdef Q_OS_WIN
@@ -200,33 +201,69 @@ void TikTokPlatform::stopChatListener()
 
 QString TikTokPlatform::findBrowserExecutable() const
 {
-    // 1. Google Chrome (Preferred)
-    const QStringList chromePaths = {
-        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-        QDir::homePath() + "\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe"
-    };
-    for (const QString& path : chromePaths)
+    // 1. Try to detect Windows Default Browser from Registry
+#ifdef Q_OS_WIN
+    QSettings userChoice("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice", QSettings::NativeFormat);
+    QString progId = userChoice.value("ProgId").toString();
+    if (!progId.isEmpty())
     {
-        if (QFile::exists(path)) return path;
-    }
+        QSettings cmdKey(QString("HKEY_CLASSES_ROOT\\%1\\shell\\open\\command").arg(progId), QSettings::NativeFormat);
+        QString rawCmd = cmdKey.value(".").toString().trimmed();
+        if (!rawCmd.isEmpty())
+        {
+            QString exePath;
+            if (rawCmd.startsWith('"'))
+            {
+                int nextQuote = rawCmd.indexOf('"', 1);
+                if (nextQuote > 1) exePath = rawCmd.mid(1, nextQuote - 1);
+            }
+            else
+            {
+                exePath = rawCmd.split(' ').first();
+            }
 
-    // 2. Microsoft Edge (Chromium fallback)
-    const QStringList edgePaths = {
+            if (!exePath.isEmpty() && QFile::exists(exePath))
+            {
+                QString base = QFileInfo(exePath).baseName().toLower();
+                if (base.contains("chrome") || base.contains("edge") || base.contains("msedge") ||
+                    base.contains("brave") || base.contains("vivaldi") || base.contains("opera"))
+                {
+                    return exePath;
+                }
+            }
+        }
+    }
+#endif
+
+    // 2. Candidate paths (Edge is preinstalled on 100% of Windows 10/11 machines, plus Chrome, Brave, Vivaldi)
+    const QStringList candidatePaths = {
+        // Microsoft Edge (Default Windows system browser)
         "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
         "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-        QDir::homePath() + "\\AppData\\Local\\Microsoft\\Edge\\Application\\msedge.exe"
+        QDir::homePath() + "\\AppData\\Local\\Microsoft\\Edge\\Application\\msedge.exe",
+        // Google Chrome
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+        QDir::homePath() + "\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe",
+        // Brave Browser
+        "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+        QDir::homePath() + "\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+        // Vivaldi / Opera
+        QDir::homePath() + "\\AppData\\Local\\Vivaldi\\Application\\vivaldi.exe",
+        "C:\\Program Files\\Vivaldi\\Application\\vivaldi.exe",
+        QDir::homePath() + "\\AppData\\Local\\Programs\\Opera\\launcher.exe"
     };
-    for (const QString& path : edgePaths)
+    for (const QString& path : candidatePaths)
     {
         if (QFile::exists(path)) return path;
     }
 
-    // 3. System PATH
-    QString inPath = QStandardPaths::findExecutable("chrome.exe");
-    if (!inPath.isEmpty()) return inPath;
-    inPath = QStandardPaths::findExecutable("msedge.exe");
-    if (!inPath.isEmpty()) return inPath;
+    // 3. System PATH lookup
+    for (const QString& exeName : { "msedge.exe", "chrome.exe", "brave.exe", "vivaldi.exe" })
+    {
+        QString inPath = QStandardPaths::findExecutable(exeName);
+        if (!inPath.isEmpty()) return inPath;
+    }
 
     return {};
 }
@@ -277,6 +314,7 @@ void TikTokPlatform::ensureBrowserRunning(std::function<void(bool success)> call
             QString("--user-data-dir=%1").arg(profileDir),
             "--window-size=1280,720",
             "--mute-audio",
+            "--disable-accelerated-video-decode",
             "--no-first-run",
             "--no-default-browser-check",
             "--disable-background-timer-throttling",
@@ -443,6 +481,86 @@ void TikTokPlatform::onCdpConnected()
     sendCdpCommand("Network.enable");
     sendCdpCommand("Runtime.enable");
 
+    // Inject optimization script to destroy/pause/mute video and canvas elements to reduce RAM and CPU to near zero
+    QJsonObject injectParams;
+    injectParams["source"] = R"JS(
+        (() => {
+            const disableMedia = () => {
+                try {
+                    const media = document.querySelectorAll('video, canvas, audio');
+                    for (const m of media) {
+                        try {
+                            if (m.tagName.toLowerCase() === 'video') {
+                                m.pause();
+                                m.muted = true;
+                                m.src = '';
+                                m.srcObject = null;
+                            }
+                            m.style.display = 'none';
+                            m.remove();
+                        } catch(e) {}
+                    }
+                } catch(e) {}
+            };
+
+            const injectStyle = () => {
+                try {
+                    if (document.getElementById('antigravity-media-killer')) return;
+                    const css = document.createElement('style');
+                    css.id = 'antigravity-media-killer';
+                    css.textContent = `
+                        video, canvas, audio, 
+                        .live-room-player-container, 
+                        [data-e2e="live-player"],
+                        [class*="DivPlayerContainer"],
+                        [class*="LivePlayer"] {
+                            display: none !important;
+                            visibility: hidden !important;
+                            opacity: 0 !important;
+                            width: 0 !important;
+                            height: 0 !important;
+                        }
+                    `;
+                    if (document.head) document.head.appendChild(css);
+                } catch(e) {}
+            };
+
+            injectStyle();
+            disableMedia();
+            setInterval(() => {
+                injectStyle();
+                disableMedia();
+            }, 1500);
+            window.addEventListener('DOMContentLoaded', () => { injectStyle(); disableMedia(); });
+            window.addEventListener('load', () => { injectStyle(); disableMedia(); });
+        })();
+    )JS";
+    sendCdpCommand("Page.addScriptToEvaluateOnNewDocument", injectParams);
+
+    // Also run immediately on currently open document
+    QJsonObject evalParams;
+    evalParams["expression"] = R"JS(
+        (() => {
+            try {
+                const media = document.querySelectorAll('video, canvas, audio');
+                for (const m of media) {
+                    try {
+                        if (m.tagName.toLowerCase() === 'video') {
+                            m.pause();
+                            m.muted = true;
+                            m.src = '';
+                            m.srcObject = null;
+                        }
+                        m.style.display = 'none';
+                        m.remove();
+                    } catch(e) {}
+                }
+            } catch(e) {}
+        })();
+    )JS";
+    evalParams["returnByValue"] = true;
+    sendCdpCommand("Runtime.evaluate", evalParams);
+
     // Start DOM scraping timer for viewer counts, captcha detection, and DOM fallback
     m_domScrapeTimer->start(2500);
 }
@@ -562,6 +680,22 @@ void TikTokPlatform::onDomScrapeTimeout()
                               bodyText.includes("Verifica si eres un robot") || 
                               bodyText.includes("SecSDK") ||
                               bodyText.includes("verify to continue");
+
+            // Remove any video or canvas to maintain near 0% CPU and low RAM
+            try {
+                const vids = document.querySelectorAll('video, canvas');
+                for (const v of vids) {
+                    try {
+                        if (v.tagName.toLowerCase() === 'video') {
+                            v.pause();
+                            v.muted = true;
+                            v.src = '';
+                            v.srcObject = null;
+                        }
+                        v.remove();
+                    } catch(e) {}
+                }
+            } catch(e) {}
 
             // Only extract DOM chat rows as safety net if WebSocket stream has not delivered frames yet
             const domMessages = [];

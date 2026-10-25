@@ -60,6 +60,7 @@ public:
     static ChatManager& instance();
 
     void addMessage(const ChatMessage& msg);
+    ChatMessage getMessageById(const QString& id) const;
     QList<ChatMessage> getFilteredMessages() const;
     QList<ChatMessage> getAllMessages() const;
 

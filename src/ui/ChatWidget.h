@@ -37,9 +37,11 @@ private slots:
     void onSimulateMessageClicked();
     void onSimulateDonationClicked();
     void onSimulateEventClicked();
+    void onMessageAnchorClicked(const QUrl& url);
 
 private:
     void setupUi();
+    void showMessageDetailDialog(const ChatMessage& msg);
     void appendHtmlFormatted(const ChatMessage& msg);
     QString formatMessageHtml(const ChatMessage& msg);
     QString getPlatformBadgeHtml(const QString& platform) const;
