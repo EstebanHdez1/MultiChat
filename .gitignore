@@ -1,0 +1,53 @@
+# Build directories
+build/
+bin/
+out/
+cmake-build-*/
+release/
+portable/
+*.zip
+
+# Tests (excluded from GitHub repo as requested)
+tests/
+
+# Executables and libraries
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.obj
+*.o
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_*
+
+# Qt generated files
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.qrc.depends
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.suo
+*.user
+*.user.*
+*.workspace
+
+# Temporary / Scratch files
+scratch/
+scratch_*
+*.tmp
+*.bak
+page.html
+cookies.txt
+tt_cookies.txt
+*.bin

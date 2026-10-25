@@ -1,0 +1,26 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>icons/twitch.svg</file>
+        <file>icons/youtube.svg</file>
+        <file>icons/kick.svg</file>
+        <file>icons/tiktok.svg</file>
+        <file>icons/chat.svg</file>
+        <file>icons/channels.svg</file>
+        <file>icons/trophy.svg</file>
+        <file>icons/stats.svg</file>
+        <file>icons/style.svg</file>
+        <file>icons/settings.svg</file>
+        <file>icons/logs.svg</file>
+        <file>icons/globe.svg</file>
+        <file>icons/eye.svg</file>
+        <file>icons/bolt.svg</file>
+        <file>icons/stop.svg</file>
+        <file>icons/save.svg</file>
+        <file>icons/trash.svg</file>
+        <file>icons/refresh.svg</file>
+        <file>icons/copy.svg</file>
+        <file>icons/dice.svg</file>
+        <file>icons/filter.svg</file>
+    </qresource>
+</RCC>

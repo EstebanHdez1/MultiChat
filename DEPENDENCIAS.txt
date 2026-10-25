@@ -1,0 +1,62 @@
+================================================================================
+ MultiChat - Guía de Instalación de Dependencias y Compilación
+================================================================================
+
+Si vas a usar la versión Portable (Release), NO necesitas instalar nada:
+Simplemente descomprime `MultiChat-v1.0.0-Windows-Portable.zip` y ejecuta `MultiChat.exe`.
+
+Si deseas compilar la aplicación desde el código fuente o modificarla,
+sigue estos pasos rápidos:
+
+--------------------------------------------------------------------------------
+1. ENTORNO RECOMENDADO (Windows 10 / 11)
+--------------------------------------------------------------------------------
+MultiChat utiliza C++20 y Qt 6. Se recomienda MSYS2 con MinGW-w64 (UCRT64 o MINGW64).
+
+Paso 1: Descargar e instalar MSYS2
+   - Sitio oficial: https://www.msys2.org/
+   - Descarga el instalador y ejecútalo (directorio por defecto: C:\msys64).
+
+Paso 2: Abrir la terminal "MSYS2 MINGW64" o "MSYS2 UCRT64" y ejecutar:
+   pacman -Syu
+
+Paso 3: Instalar el compilador GCC, CMake, Ninja y Qt6:
+   pacman -S --needed \
+     mingw-w64-x86_64-toolchain \
+     mingw-w64-x86_64-cmake \
+     mingw-w64-x86_64-ninja \
+     mingw-w64-x86_64-qt6-base \
+     mingw-w64-x86_64-qt6-websockets \
+     mingw-w64-x86_64-qt6-svg \
+     mingw-w64-x86_64-nlohmann-json \
+     mingw-w64-x86_64-zlib \
+     git
+
+--------------------------------------------------------------------------------
+2. AGREGAR MINGW AL PATH DE WINDOWS
+--------------------------------------------------------------------------------
+Agrega `C:\msys64\mingw64\bin` a las variables de entorno de tu sistema (PATH)
+para poder compilar desde PowerShell, CMD o VS Code.
+
+--------------------------------------------------------------------------------
+3. COMPILACIÓN DEL PROYECTO
+--------------------------------------------------------------------------------
+Desde PowerShell en la carpeta raíz del proyecto:
+
+1) Configurar el proyecto con CMake:
+   cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+2) Compilar el ejecutable:
+   cmake --build build
+
+3) Ejecutar:
+   .\build\MultistreamChat.exe
+
+--------------------------------------------------------------------------------
+4. GENERAR VERSIÓN PORTABLE (ZIP)
+--------------------------------------------------------------------------------
+Para generar el archivo ZIP portable con todas las DLLs necesarias:
+   powershell -ExecutionPolicy Bypass -File scripts\package_portable.ps1
+
+El archivo resultante quedará en `release\MultiChat-v1.0.0-Windows-Portable.zip`.
+================================================================================
