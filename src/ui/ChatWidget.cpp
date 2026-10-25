@@ -58,124 +58,138 @@ void ChatWidget::setupUi()
     mainLayout->setContentsMargins(12, 12, 12, 12);
     mainLayout->setSpacing(6);
 
-    // Top Filter Bar
+    // Top Filter Bar (Two clean responsive rows)
     m_filterBar = new QWidget(this);
-    m_filterBar->setStyleSheet("background-color: #1A1D24; border-radius: 8px; padding: 4px;");
+    m_filterBar->setObjectName("FilterBar");
+    m_filterBar->setStyleSheet(
+        "QWidget#FilterBar { background-color: #161A23; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; }"
+        "QLabel { background: transparent; border: none; }"
+    );
     auto* filterBar = m_filterBar;
-    auto* filterLayout = new QHBoxLayout(m_filterBar);
-    filterLayout->setContentsMargins(10, 6, 10, 6);
-    filterLayout->setSpacing(10);
+    auto* barLayout = new QVBoxLayout(m_filterBar);
+    barLayout->setContentsMargins(10, 8, 10, 8);
+    barLayout->setSpacing(8);
+
+    // Row 1: Platforms & Message Types
+    auto* row1 = new QHBoxLayout();
+    row1->setSpacing(6);
 
     auto* lblFilterIcon = new QLabel(filterBar);
     lblFilterIcon->setPixmap(QIcon(":/icons/filter.svg").pixmap(14, 14));
     auto* lblFilter = new QLabel("Filtros:", filterBar);
-    lblFilter->setStyleSheet("font-weight: bold; color: #9CA3AF; font-size: 11px;");
-    filterLayout->addWidget(lblFilterIcon);
-    filterLayout->addWidget(lblFilter);
+    lblFilter->setStyleSheet("font-weight: 700; color: #94A3B8; font-size: 11px;");
+    row1->addWidget(lblFilterIcon);
+    row1->addWidget(lblFilter);
 
-    // Platform filters
-    auto createPlatformCheck = [this, filterBar](const QString& name, const QString& color, const QString& iconPath) -> QCheckBox* {
-        auto* chk = new QCheckBox(filterBar);
-        chk->setIcon(QIcon(iconPath));
-        chk->setIconSize(QSize(16, 16));
-        chk->setText(" ");
-        chk->setMinimumWidth(38);
-        chk->setToolTip(name);
-        chk->setAccessibleName(name);
-        chk->setChecked(true);
-        chk->setCursor(Qt::PointingHandCursor);
-        chk->setStyleSheet(QString(
-            "QCheckBox { color: %1; font-weight: bold; font-size: 12px; spacing: 5px; }"
-            "QCheckBox::indicator { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #4B5563; background: #111827; }"
-            "QCheckBox::indicator:checked { background: %1; border-color: %1; }"
+    // Platform toggle buttons
+    auto createPlatformButton = [this, filterBar](const QString& name, const QString& color, const QString& iconPath) -> QPushButton* {
+        auto* btn = new QPushButton(filterBar);
+        btn->setCheckable(true);
+        btn->setChecked(true);
+        btn->setIcon(QIcon(iconPath));
+        btn->setIconSize(QSize(16, 16));
+        btn->setFixedSize(30, 26);
+        btn->setToolTip(QString("%1: Click para alternar").arg(name));
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setStyleSheet(QString(
+            "QPushButton { background: %1; border-radius: 5px; border: 1px solid rgba(255,255,255,0.25); }"
+            "QPushButton:hover { border-color: rgba(255,255,255,0.5); }"
+            "QPushButton:!checked { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.06); }"
         ).arg(color));
-        connect(chk, &QCheckBox::toggled, this, &ChatWidget::onFilterChanged);
-        return chk;
+        connect(btn, &QPushButton::toggled, this, &ChatWidget::onFilterChanged);
+        return btn;
     };
 
-    m_chkTwitch = createPlatformCheck("Twitch", "#9146FF", ":/icons/twitch.svg");
-    m_chkYouTube = createPlatformCheck("YouTube", "#EF4444", ":/icons/youtube.svg");
-    m_chkKick = createPlatformCheck("Kick", "#53FC18", ":/icons/kick.svg");
-    m_chkTikTok = createPlatformCheck("TikTok", "#FE2C55", ":/icons/tiktok.svg");
+    m_chkTwitch = createPlatformButton("Twitch", "#9146FF", ":/icons/twitch.svg");
+    m_chkYouTube = createPlatformButton("YouTube", "#EF4444", ":/icons/youtube.svg");
+    m_chkKick = createPlatformButton("Kick", "#53FC18", ":/icons/kick.svg");
+    m_chkTikTok = createPlatformButton("TikTok", "#FE2C55", ":/icons/tiktok.svg");
 
-    filterLayout->addWidget(m_chkTwitch);
-    filterLayout->addWidget(m_chkYouTube);
-    filterLayout->addWidget(m_chkKick);
-    filterLayout->addWidget(m_chkTikTok);
+    row1->addWidget(m_chkTwitch);
+    row1->addWidget(m_chkYouTube);
+    row1->addWidget(m_chkKick);
+    row1->addWidget(m_chkTikTok);
 
     auto* sep1 = new QFrame(filterBar);
     sep1->setFrameShape(QFrame::VLine);
-    sep1->setStyleSheet("color: #374151;");
-    filterLayout->addWidget(sep1);
+    sep1->setStyleSheet("color: rgba(255,255,255,0.12);");
+    row1->addWidget(sep1);
 
-    // Type filters
-    auto createTypeCheck = [this, filterBar](const QString& name) -> QCheckBox* {
-        auto* chk = new QCheckBox(name, filterBar);
-        chk->setChecked(true);
-        chk->setCursor(Qt::PointingHandCursor);
-        chk->setStyleSheet(
-            "QCheckBox { color: #D1D5DB; font-size: 11px; spacing: 4px; }"
-            "QCheckBox::indicator { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #4B5563; background: #111827; }"
-            "QCheckBox::indicator:checked { background: #3B82F6; border-color: #3B82F6; }"
+    // Type filter pills
+    auto createTypeButton = [this, filterBar](const QString& name, const QString& tip) -> QPushButton* {
+        auto* btn = new QPushButton(name, filterBar);
+        btn->setCheckable(true);
+        btn->setChecked(true);
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setFixedHeight(26);
+        btn->setToolTip(tip);
+        btn->setStyleSheet(
+            "QPushButton { background: rgba(37, 99, 235, 0.25); color: #93C5FD; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 0 8px; font-size: 11px; font-weight: 600; }"
+            "QPushButton:hover { background: rgba(37, 99, 235, 0.4); color: #FFFFFF; }"
+            "QPushButton:!checked { background: rgba(255, 255, 255, 0.04); color: #64748B; border-color: rgba(255, 255, 255, 0.08); }"
         );
-        connect(chk, &QCheckBox::toggled, this, &ChatWidget::onFilterChanged);
-        return chk;
+        connect(btn, &QPushButton::toggled, this, &ChatWidget::onFilterChanged);
+        return btn;
     };
 
-    m_chkNormal = createTypeCheck("Normal");
-    m_chkDonations = createTypeCheck("Donaciones");
-    m_chkSubs = createTypeCheck("Subs");
-    m_chkGifts = createTypeCheck("Gifts");
-    m_chkEvents = createTypeCheck("Eventos Live");
-    m_chkEvents->setToolTip("Notificaciones temporales de usuarios que se unen, comparten o dan like");
+    m_chkNormal = createTypeButton("Chat", "Mensajes de chat normales");
+    m_chkDonations = createTypeButton("Donaciones", "Super Chats, Bits y Donaciones");
+    m_chkSubs = createTypeButton("Subs", "Suscripciones y renovaciones");
+    m_chkGifts = createTypeButton("Gifts", "Regalos y sub gifts");
+    m_chkEvents = createTypeButton("Eventos", "Notificaciones de personas que se unen, dan like o comparten");
 
-    filterLayout->addWidget(m_chkNormal);
-    filterLayout->addWidget(m_chkDonations);
-    filterLayout->addWidget(m_chkSubs);
-    filterLayout->addWidget(m_chkGifts);
-    filterLayout->addWidget(m_chkEvents);
+    row1->addWidget(m_chkNormal);
+    row1->addWidget(m_chkDonations);
+    row1->addWidget(m_chkSubs);
+    row1->addWidget(m_chkGifts);
+    row1->addWidget(m_chkEvents);
+    row1->addStretch();
 
-    filterLayout->addStretch();
+    // Row 2: Action Tools (Auto-scroll, Limpiar, Abrir Web, Simular)
+    auto* row2 = new QHBoxLayout();
+    row2->setSpacing(8);
 
-    // Tools in Filter Bar
     m_btnAutoScroll = new QPushButton("Auto-scroll ON", filterBar);
     m_btnAutoScroll->setCheckable(true);
     m_btnAutoScroll->setChecked(true);
+    m_btnAutoScroll->setFixedHeight(26);
     m_btnAutoScroll->setCursor(Qt::PointingHandCursor);
     m_btnAutoScroll->setStyleSheet(
-        "QPushButton { background: #2563EB; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: bold; }"
-        "QPushButton:checked { background: #2563EB; }"
-        "QPushButton:!checked { background: #4B5563; }"
+        "QPushButton { background: #2563EB; color: white; border: none; border-radius: 5px; padding: 0 10px; font-size: 11px; font-weight: 700; }"
+        "QPushButton:!checked { background: #374151; color: #94A3B8; }"
     );
     connect(m_btnAutoScroll, &QPushButton::toggled, this, &ChatWidget::onAutoScrollToggled);
-    filterLayout->addWidget(m_btnAutoScroll);
+    row2->addWidget(m_btnAutoScroll);
 
     m_btnClear = new QPushButton("Limpiar", filterBar);
     m_btnClear->setIcon(QIcon(":/icons/trash.svg"));
     m_btnClear->setIconSize(QSize(12, 12));
+    m_btnClear->setFixedHeight(26);
     m_btnClear->setCursor(Qt::PointingHandCursor);
-    m_btnClear->setStyleSheet("QPushButton { background: #374151; color: #E5E7EB; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; } QPushButton:hover { background: #4B5563; }");
+    m_btnClear->setStyleSheet("QPushButton { background: #374151; color: #E5E7EB; border: none; border-radius: 5px; padding: 0 10px; font-size: 11px; font-weight: 500; } QPushButton:hover { background: #4B5563; }");
     connect(m_btnClear, &QPushButton::clicked, this, &ChatWidget::onClearChatClicked);
-    filterLayout->addWidget(m_btnClear);
+    row2->addWidget(m_btnClear);
 
     m_btnOpenWeb = new QPushButton("Abrir Web", filterBar);
     m_btnOpenWeb->setIcon(QIcon(":/icons/globe.svg"));
     m_btnOpenWeb->setIconSize(QSize(12, 12));
+    m_btnOpenWeb->setFixedHeight(26);
     m_btnOpenWeb->setCursor(Qt::PointingHandCursor);
     m_btnOpenWeb->setToolTip("Abre la interfaz web moderna en tu navegador o comparte con tu móvil");
-    m_btnOpenWeb->setStyleSheet("QPushButton { background: #0D9488; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: bold; } QPushButton:hover { background: #0F766E; }");
+    m_btnOpenWeb->setStyleSheet("QPushButton { background: #0D9488; color: white; border: none; border-radius: 5px; padding: 0 10px; font-size: 11px; font-weight: 700; } QPushButton:hover { background: #0F766E; }");
     connect(m_btnOpenWeb, &QPushButton::clicked, this, []() {
         QDesktopServices::openUrl(QUrl("http://localhost:8080"));
     });
-    filterLayout->addWidget(m_btnOpenWeb);
+    row2->addWidget(m_btnOpenWeb);
 
     m_btnSimulate = new QPushButton("Simular", filterBar);
     m_btnSimulate->setIcon(QIcon(":/icons/dice.svg"));
-    m_btnSimulate->setIconSize(QSize(13, 13));
+    m_btnSimulate->setIconSize(QSize(12, 12));
+    m_btnSimulate->setFixedHeight(26);
     m_btnSimulate->setToolTip("Simular mensajes, donaciones y eventos de directo");
     m_btnSimulate->setCursor(Qt::PointingHandCursor);
     m_btnSimulate->setStyleSheet(
-        "QPushButton { background: #374151; color: #E5E7EB; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 500; }"
+        "QPushButton { background: #374151; color: #E5E7EB; border: none; border-radius: 5px; padding: 0 10px; font-size: 11px; font-weight: 500; }"
         "QPushButton:hover { background: #4B5563; }"
     );
     auto* simMenu = new QMenu(m_btnSimulate);
@@ -191,8 +205,12 @@ void ChatWidget::setupUi()
     auto* actEvt = simMenu->addAction(QIcon(":/icons/bolt.svg"), "Simular Evento Live");
     connect(actEvt, &QAction::triggered, this, &ChatWidget::onSimulateEventClicked);
     m_btnSimulate->setMenu(simMenu);
-    filterLayout->addWidget(m_btnSimulate);
+    row2->addWidget(m_btnSimulate);
 
+    row2->addStretch();
+
+    barLayout->addLayout(row1);
+    barLayout->addLayout(row2);
     mainLayout->addWidget(m_filterBar);
 
     // Chat Browser

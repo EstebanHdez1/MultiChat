@@ -74,9 +74,13 @@ void Sidebar::setupUi()
 
     // Platforms Quick Status Widget
     m_statusFrame = new QFrame(this);
-    m_statusFrame->setStyleSheet("background-color: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px;");
+    m_statusFrame->setObjectName("SidebarStatusFrame");
+    m_statusFrame->setStyleSheet(
+        "QFrame#SidebarStatusFrame { background-color: rgba(255,255,255,0.04); border-radius: 8px; }"
+        "QFrame#SidebarStatusFrame QLabel { background: transparent; border: none; }"
+    );
     auto* statusLayout = new QVBoxLayout(m_statusFrame);
-    statusLayout->setContentsMargins(8, 8, 8, 8);
+    statusLayout->setContentsMargins(10, 8, 10, 8);
     statusLayout->setSpacing(4);
 
     auto* lblPlatformsTitle = new QLabel("ESTADO EN VIVO", m_statusFrame);
@@ -103,7 +107,11 @@ void Sidebar::setupUi()
 
     // Total Viewers Box
     m_viewersFrame = new QFrame(this);
-    m_viewersFrame->setStyleSheet("background-color: #1E293B; border-radius: 8px; padding: 6px;");
+    m_viewersFrame->setObjectName("SidebarViewersFrame");
+    m_viewersFrame->setStyleSheet(
+        "QFrame#SidebarViewersFrame { background-color: #1A2234; border-radius: 8px; }"
+        "QFrame#SidebarViewersFrame QLabel { background: transparent; border: none; }"
+    );
     auto* vLayout = new QHBoxLayout(m_viewersFrame);
     vLayout->setContentsMargins(10, 8, 10, 8);
 

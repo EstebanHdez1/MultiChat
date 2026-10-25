@@ -1,5 +1,6 @@
 #include "LocalWebServer.h"
 #include "ChatManager.h"
+#include "ConfigManager.h"
 #include "EventManager.h"
 #include "Logger.h"
 #include <QUrl>
@@ -21,6 +22,9 @@ LocalWebServer::LocalWebServer(QObject* parent)
     connect(m_wsServer, &QWebSocketServer::newConnection, this, &LocalWebServer::onNewWebSocketConnection);
 
     connect(&ChatManager::instance(), &ChatManager::messageReceived, this, &LocalWebServer::onChatMessageReceived);
+    connect(&ChatManager::instance(), &ChatManager::chatCleared, this, &LocalWebServer::onChatCleared);
+    connect(&ChatManager::instance(), &ChatManager::filterChanged, this, &LocalWebServer::onFilterChanged);
+    connect(&ConfigManager::instance(), &ConfigManager::styleChanged, this, &LocalWebServer::onStyleChanged);
     connect(&EventManager::instance(), &EventManager::viewerCountUpdated, this, &LocalWebServer::onViewerCountUpdated);
     connect(&EventManager::instance(), &EventManager::platformStatusChanged, this, &LocalWebServer::onPlatformStatusChanged);
 }
@@ -244,9 +248,71 @@ void LocalWebServer::onNewWebSocketConnection()
             recentMsgs.append(messageToJson(all[i]));
         }
         initObj["recentMessages"] = recentMsgs;
+        initObj["style"] = styleToJson(ConfigManager::instance().getStyleConfig());
+        initObj["filter"] = filterToJson(ChatManager::instance().getFilter());
 
         socket->sendTextMessage(QString::fromUtf8(QJsonDocument(initObj).toJson(QJsonDocument::Compact)));
     }
+}
+
+void LocalWebServer::onChatCleared()
+{
+    if (!m_isRunning || m_wsClients.isEmpty()) return;
+    QJsonObject obj;
+    obj["type"] = "clear_chat";
+    broadcastJson(obj);
+}
+
+void LocalWebServer::onFilterChanged(const ChatFilter& filter)
+{
+    if (!m_isRunning || m_wsClients.isEmpty()) return;
+    QJsonObject obj = filterToJson(filter);
+    obj["type"] = "filter_update";
+    broadcastJson(obj);
+}
+
+void LocalWebServer::onStyleChanged(const AppStyleConfig& style)
+{
+    if (!m_isRunning || m_wsClients.isEmpty()) return;
+    QJsonObject obj = styleToJson(style);
+    obj["type"] = "style_update";
+    broadcastJson(obj);
+}
+
+QJsonObject LocalWebServer::styleToJson(const AppStyleConfig& style) const
+{
+    QJsonObject obj;
+    obj["fontFamily"] = style.fontFamily;
+    obj["fontSize"] = style.fontSize;
+    obj["textColor"] = style.textColor;
+    obj["usernameColor"] = style.usernameColor;
+    obj["timestampColor"] = style.timestampColor;
+    obj["backgroundColor"] = style.backgroundColor;
+    obj["cardBackgroundColor"] = style.cardBackgroundColor;
+    obj["showTimestamps"] = style.showTimestamps;
+    obj["showPlatformBadges"] = style.showPlatformBadges;
+    obj["showUsernames"] = style.showUsernames;
+    obj["showDonationHighlights"] = style.showDonationHighlights;
+    obj["showSubscriptionHighlights"] = style.showSubscriptionHighlights;
+    obj["autoScroll"] = style.autoScroll;
+    obj["borderRadius"] = style.borderRadius;
+    obj["messageSpacing"] = style.messageSpacing;
+    return obj;
+}
+
+QJsonObject LocalWebServer::filterToJson(const ChatFilter& filter) const
+{
+    QJsonObject obj;
+    obj["showTwitch"] = filter.showTwitch;
+    obj["showYouTube"] = filter.showYouTube;
+    obj["showKick"] = filter.showKick;
+    obj["showTikTok"] = filter.showTikTok;
+    obj["showNormal"] = filter.showNormal;
+    obj["showDonations"] = filter.showDonations;
+    obj["showSubscriptions"] = filter.showSubscriptions;
+    obj["showGifts"] = filter.showGifts;
+    obj["showEvents"] = filter.showEvents;
+    return obj;
 }
 
 void LocalWebServer::onWebSocketDisconnected()
@@ -888,13 +954,86 @@ QByteArray LocalWebServer::getIndexHtml() const
       };
     }
 
+    let currentFilters = {
+      showTwitch: true,
+      showYouTube: true,
+      showKick: true,
+      showTikTok: true,
+      showNormal: true,
+      showDonations: true,
+      showSubscriptions: true,
+      showGifts: true,
+      showEvents: true
+    };
+
+    function applyStyles(style) {
+      if (!style) return;
+      if (style.fontFamily) document.body.style.fontFamily = `'${style.fontFamily}', -apple-system, sans-serif`;
+      if (style.fontSize) document.body.style.fontSize = style.fontSize + 'px';
+      if (style.textColor) document.body.style.color = style.textColor;
+      if (!document.body.classList.contains('overlay-mode') && style.backgroundColor && style.backgroundColor !== 'transparent') {
+        document.body.style.backgroundColor = style.backgroundColor;
+      }
+      if (typeof style.autoScroll === 'boolean') {
+        autoScroll = style.autoScroll;
+        btnAutoScroll.classList.toggle('active', autoScroll);
+      }
+
+      let styleEl = document.getElementById('dynamicChatStyle');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'dynamicChatStyle';
+        document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = `
+        .msg-time { display: ${style.showTimestamps ? 'inline' : 'none'} !important; color: ${style.timestampColor || '#64748B'} !important; }
+        .badge-platform { display: ${style.showPlatformBadges ? 'inline-flex' : 'none'} !important; }
+        .msg-user { display: ${style.showUsernames ? 'inline' : 'none'} !important; }
+        .chat-row { margin: ${(style.messageSpacing || 3)}px 0 !important; }
+      `;
+    }
+
+    function applyFilters(filters) {
+      if (filters) currentFilters = Object.assign(currentFilters, filters);
+      const rows = container.querySelectorAll('.chat-row');
+      rows.forEach(row => {
+        const plat = row.dataset.platform;
+        const type = row.dataset.type;
+        let visible = true;
+        if (plat === 'twitch' && !currentFilters.showTwitch) visible = false;
+        else if (plat === 'youtube' && !currentFilters.showYouTube) visible = false;
+        else if (plat === 'kick' && !currentFilters.showKick) visible = false;
+        else if (plat === 'tiktok' && !currentFilters.showTikTok) visible = false;
+
+        if (type === 'normal' && !currentFilters.showNormal) visible = false;
+        else if (type === 'donation' && !currentFilters.showDonations) visible = false;
+        else if (type === 'subscription' && !currentFilters.showSubscriptions) visible = false;
+        else if (type === 'gift' && !currentFilters.showGifts) visible = false;
+
+        row.style.display = visible ? 'block' : 'none';
+      });
+
+      if (eventsDock) {
+        eventsDock.style.display = currentFilters.showEvents ? 'flex' : 'none';
+      }
+    }
+
     function handleIncomingData(data) {
       if (data.type === 'init') {
+        if (data.style) applyStyles(data.style);
+        if (data.filter) applyFilters(data.filter);
         if (data.recentMessages && Array.isArray(data.recentMessages)) {
           data.recentMessages.forEach(msg => appendMessage(msg, false));
           scrollToBottom();
         }
         if (data.viewers) updateViewerChips(data.viewers);
+      } else if (data.type === 'clear_chat') {
+        container.innerHTML = '';
+        eventsDock.innerHTML = '';
+      } else if (data.type === 'style_update') {
+        applyStyles(data);
+      } else if (data.type === 'filter_update') {
+        applyFilters(data);
       } else if (data.type === 'chat_message') {
         appendMessage(data, true);
       } else if (data.type === 'viewer_count') {
@@ -928,27 +1067,48 @@ QByteArray LocalWebServer::getIndexHtml() const
       const userColor = msg.userColor || '#818CF8';
       const time = msg.formattedTime || '';
 
+      let msgTypeKey = 'normal';
       let highlightBadge = '';
       if (msg.isDonation || msg.type === 1) {
+        msgTypeKey = 'donation';
         row.classList.add('donation', 'highlighted');
         const amountStr = msg.donationAmount > 0 ? `${msg.donationAmount.toFixed(2)} ${msg.currency || ''}` : '';
         highlightBadge = `<span class="pill-highlight donation">${actionSvgs.gift} [${amountStr}]</span> `;
       } else if (msg.type === 2) {
+        msgTypeKey = 'gift';
         row.classList.add('gift', 'highlighted');
         highlightBadge = `<span class="pill-highlight gift">${actionSvgs.gift}</span> `;
       } else if (msg.type === 3) {
+        msgTypeKey = 'subscription';
         row.classList.add('subscription', 'highlighted');
         highlightBadge = `<span class="pill-highlight subscription">${actionSvgs.star}</span> `;
       }
+
+      row.dataset.platform = platformKey;
+      row.dataset.type = msgTypeKey;
 
       row.innerHTML = `
         <span class="msg-time">[${time}]</span><span class="badge-platform ${platformKey}">${platformIcon}</span><span class="msg-user" style="color: ${userColor}">${escapeHtml(msg.displayName || msg.username)}:</span><span class="msg-body">${highlightBadge}${formatMessageText(msg.message, msg.emotes)}</span>
       `;
 
+      // Check current filters
+      let visible = true;
+      if (platformKey === 'twitch' && !currentFilters.showTwitch) visible = false;
+      else if (platformKey === 'youtube' && !currentFilters.showYouTube) visible = false;
+      else if (platformKey === 'kick' && !currentFilters.showKick) visible = false;
+      else if (platformKey === 'tiktok' && !currentFilters.showTikTok) visible = false;
+
+      if (msgTypeKey === 'normal' && !currentFilters.showNormal) visible = false;
+      else if (msgTypeKey === 'donation' && !currentFilters.showDonations) visible = false;
+      else if (msgTypeKey === 'subscription' && !currentFilters.showSubscriptions) visible = false;
+      else if (msgTypeKey === 'gift' && !currentFilters.showGifts) visible = false;
+
+      row.style.display = visible ? 'block' : 'none';
+
       container.appendChild(row);
 
-      // Keep max 120 messages in DOM
-      while (container.children.length > 120) {
+      // Keep max 150 messages in DOM
+      while (container.children.length > 150) {
         container.removeChild(container.firstChild);
       }
 
@@ -958,6 +1118,8 @@ QByteArray LocalWebServer::getIndexHtml() const
     }
 
     function renderTransientToast(msg) {
+      if (!currentFilters.showEvents) return;
+
       const toast = document.createElement('div');
       let typeClass = 'join';
       let svgIcon = actionSvgs.user;

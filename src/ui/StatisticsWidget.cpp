@@ -73,7 +73,8 @@ void StatisticsWidget::setupUi()
 QWidget* StatisticsWidget::createStatCard(const QString& title, const QString& iconPath, const QString& color, QLabel*& outValueLabel, QLabel*& outStatusLabel)
 {
     auto* card = new QFrame(this);
-    card->setStyleSheet("background-color: #1A1D24; border-radius: 10px; border: 1px solid #2D3748; padding: 12px;");
+    card->setObjectName("StatCard");
+    card->setStyleSheet("QFrame#StatCard { background-color: #1A1D24; border-radius: 10px; border: 1px solid #2D3748; } QFrame#StatCard QLabel { background: transparent; border: none; }");
 
     auto* layout = new QVBoxLayout(card);
     layout->setContentsMargins(14, 14, 14, 14);

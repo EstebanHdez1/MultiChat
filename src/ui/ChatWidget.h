@@ -52,17 +52,17 @@ private:
     QVBoxLayout* m_transientLayout;
     
     // Platform filter buttons
-    QCheckBox* m_chkTwitch;
-    QCheckBox* m_chkYouTube;
-    QCheckBox* m_chkKick;
-    QCheckBox* m_chkTikTok;
+    QPushButton* m_chkTwitch;
+    QPushButton* m_chkYouTube;
+    QPushButton* m_chkKick;
+    QPushButton* m_chkTikTok;
 
     // Type filter buttons
-    QCheckBox* m_chkNormal;
-    QCheckBox* m_chkDonations;
-    QCheckBox* m_chkSubs;
-    QCheckBox* m_chkGifts;
-    QCheckBox* m_chkEvents;
+    QPushButton* m_chkNormal;
+    QPushButton* m_chkDonations;
+    QPushButton* m_chkSubs;
+    QPushButton* m_chkGifts;
+    QPushButton* m_chkEvents;
 
     QPushButton* m_btnAutoScroll;
     QPushButton* m_btnClear;

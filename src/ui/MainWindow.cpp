@@ -3,6 +3,7 @@
 #include "ConnectionManager.h"
 #include "EventManager.h"
 #include <QHBoxLayout>
+#include <QScrollArea>
 #include <QIcon>
 
 MainWindow::MainWindow(QWidget* parent)
@@ -52,15 +53,26 @@ void MainWindow::setupUi()
     // Add Sidebar
     mainLayout->addWidget(m_sidebar);
 
+    auto makeScrollable = [](QWidget* widget) -> QWidget* {
+        auto* scroll = new QScrollArea();
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
+        scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        scroll->setStyleSheet("QScrollArea { border: none; background: transparent; } QWidget#qt_scrollarea_viewport { background: transparent; }");
+        scroll->setWidget(widget);
+        return scroll;
+    };
+
     // Add Stacked Pages
-    m_stackedWidget->addWidget(m_chatWidget);       // 0
-    m_stackedWidget->addWidget(m_channelWidget);    // 1
-    m_stackedWidget->addWidget(m_webServerWidget);  // 2
-    m_stackedWidget->addWidget(m_donationsWidget);  // 3
-    m_stackedWidget->addWidget(m_statsWidget);      // 4
-    m_stackedWidget->addWidget(m_styleWidget);      // 5
-    m_stackedWidget->addWidget(m_settingsWidget);   // 6
-    m_stackedWidget->addWidget(m_logsWidget);       // 7
+    m_stackedWidget->addWidget(m_chatWidget);                      // 0
+    m_stackedWidget->addWidget(m_channelWidget);                   // 1
+    m_stackedWidget->addWidget(makeScrollable(m_webServerWidget)); // 2
+    m_stackedWidget->addWidget(makeScrollable(m_donationsWidget)); // 3
+    m_stackedWidget->addWidget(makeScrollable(m_statsWidget));     // 4
+    m_stackedWidget->addWidget(makeScrollable(m_styleWidget));     // 5
+    m_stackedWidget->addWidget(makeScrollable(m_settingsWidget));  // 6
+    m_stackedWidget->addWidget(makeScrollable(m_logsWidget));      // 7
 
     mainLayout->addWidget(m_stackedWidget, 1);
 }
@@ -107,14 +119,16 @@ void MainWindow::applyTheme(const AppStyleConfig& style)
         "QMainWindow, QWidget#SidebarWidget, QWidget#qt_scrollarea_viewport {"
         "  background-color: %1;"
         "}"
-        "QWidget {"
+        "QLabel, QCheckBox, QRadioButton, QGroupBox {"
         "  color: #E2E8F0;"
+        "  background: transparent;"
         "}"
         "QLineEdit, QSpinBox, QComboBox {"
         "  background-color: #1A1D27;"
-        "  border: 1px solid rgba(255, 255, 255, 0.08);"
+        "  border: 1px solid rgba(255, 255, 255, 0.12);"
         "  border-radius: 6px;"
-        "  padding: 6px 10px;"
+        "  padding: 3px 8px;"
+        "  min-height: 26px;"
         "  color: #F8FAFC;"
         "  selection-background-color: #3B82F6;"
         "}"

@@ -25,41 +25,49 @@ WebServerWidget::WebServerWidget(QWidget* parent)
 void WebServerWidget::setupUi()
 {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(24, 24, 24, 24);
-    mainLayout->setSpacing(20);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(16);
 
     // Header
     auto* headerLayout = new QHBoxLayout();
+    headerLayout->setSpacing(12);
+
     auto* iconLabel = new QLabel(this);
     iconLabel->setPixmap(QIcon(":/icons/globe.svg").pixmap(24, 24));
+    iconLabel->setStyleSheet("background: transparent; border: none;");
 
     auto* titleContainer = new QVBoxLayout();
-    titleContainer->setSpacing(4);
+    titleContainer->setSpacing(3);
     auto* lblTitle = new QLabel("SERVIDOR WEB Y MODO MÓVIL / OBS", this);
-    lblTitle->setStyleSheet("font-size: 18px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.3px;");
+    lblTitle->setStyleSheet("font-size: 16px; font-weight: 700; color: #FFFFFF; background: transparent; border: none;");
     auto* lblSub = new QLabel("Accede al chat unificado en tiempo real desde tu navegador, tu celular (vía Wi-Fi) o como Overlay para OBS Studio.", this);
-    lblSub->setStyleSheet("font-size: 13px; color: #94A3B8;");
+    lblSub->setStyleSheet("font-size: 12px; color: #94A3B8; background: transparent; border: none;");
+    lblSub->setWordWrap(true);
     titleContainer->addWidget(lblTitle);
     titleContainer->addWidget(lblSub);
 
     headerLayout->addWidget(iconLabel);
-    headerLayout->addLayout(titleContainer);
-    headerLayout->addStretch();
+    headerLayout->addLayout(titleContainer, 1);
 
     mainLayout->addLayout(headerLayout);
 
     // Card 1: Server Controls
     auto* cardControl = new QFrame(this);
-    cardControl->setStyleSheet("background-color: #161B26; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px;");
+    cardControl->setObjectName("CardControl");
+    cardControl->setStyleSheet(
+        "QFrame#CardControl { background-color: #161B26; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; }"
+        "QFrame#CardControl QLabel { background: transparent; border: none; }"
+    );
     auto* controlLayout = new QVBoxLayout(cardControl);
-    controlLayout->setSpacing(14);
+    controlLayout->setContentsMargins(16, 14, 16, 14);
+    controlLayout->setSpacing(12);
 
     auto* topRow = new QHBoxLayout();
-    m_lblStatusBadge = new QLabel("🔴 SERVIDOR DETENIDO", cardControl);
-    m_lblStatusBadge->setStyleSheet("background: rgba(239, 68, 68, 0.15); color: #F87171; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 9999px; border: 1px solid rgba(239, 68, 68, 0.3);");
+    m_lblStatusBadge = new QLabel("● SERVIDOR DETENIDO", cardControl);
+    m_lblStatusBadge->setStyleSheet("background: rgba(239, 68, 68, 0.15); color: #F87171; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 9999px; border: 1px solid rgba(239, 68, 68, 0.3);");
 
     m_lblClientCount = new QLabel("0 clientes conectados", cardControl);
-    m_lblClientCount->setStyleSheet("color: #94A3B8; font-size: 12px;");
+    m_lblClientCount->setStyleSheet("color: #94A3B8; font-size: 12px; font-weight: 500;");
 
     topRow->addWidget(m_lblStatusBadge);
     topRow->addWidget(m_lblClientCount);
@@ -67,27 +75,28 @@ void WebServerWidget::setupUi()
 
     // Port settings
     auto* portRow = new QHBoxLayout();
-    portRow->setSpacing(12);
+    portRow->setSpacing(10);
 
     auto* lblHttp = new QLabel("Puerto Web (HTTP):", cardControl);
-    lblHttp->setStyleSheet("color: #CBD5E1; font-size: 13px; font-weight: 600;");
+    lblHttp->setStyleSheet("color: #CBD5E1; font-size: 12px; font-weight: 600;");
     m_spinHttpPort = new QSpinBox(cardControl);
     m_spinHttpPort->setRange(1024, 65535);
     m_spinHttpPort->setValue(8080);
-    m_spinHttpPort->setFixedWidth(90);
-    m_spinHttpPort->setStyleSheet("background: #0F131C; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; color: #FFF; font-weight: bold;");
+    m_spinHttpPort->setFixedWidth(85);
+    m_spinHttpPort->setFixedHeight(30);
 
     auto* lblWs = new QLabel("Puerto WebSocket:", cardControl);
-    lblWs->setStyleSheet("color: #CBD5E1; font-size: 13px; font-weight: 600; margin-left: 12px;");
+    lblWs->setStyleSheet("color: #CBD5E1; font-size: 12px; font-weight: 600; margin-left: 8px;");
     m_spinWsPort = new QSpinBox(cardControl);
     m_spinWsPort->setRange(1024, 65535);
     m_spinWsPort->setValue(8081);
-    m_spinWsPort->setFixedWidth(90);
-    m_spinWsPort->setStyleSheet("background: #0F131C; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; color: #FFF; font-weight: bold;");
+    m_spinWsPort->setFixedWidth(85);
+    m_spinWsPort->setFixedHeight(30);
 
     m_btnToggleServer = new QPushButton("INICIAR SERVIDOR WEB", cardControl);
     m_btnToggleServer->setCursor(Qt::PointingHandCursor);
-    m_btnToggleServer->setStyleSheet("QPushButton { background: #2563EB; color: #FFF; font-weight: 700; font-size: 13px; padding: 8px 18px; border-radius: 8px; border: none; } QPushButton:hover { background: #1D4ED8; }");
+    m_btnToggleServer->setFixedHeight(32);
+    m_btnToggleServer->setStyleSheet("QPushButton { background: #2563EB; color: #FFF; font-weight: 700; font-size: 12px; padding: 0 16px; border-radius: 6px; border: none; } QPushButton:hover { background: #1D4ED8; }");
     connect(m_btnToggleServer, &QPushButton::clicked, this, &WebServerWidget::onToggleServerClicked);
 
     portRow->addWidget(lblHttp);
@@ -104,31 +113,40 @@ void WebServerWidget::setupUi()
     // Helper for URL entry cards
     auto createUrlCard = [this](const QString& title, const QString& desc, QLineEdit*& txtOut, QPushButton*& btnCopyOut, QPushButton* btnOpen = nullptr) -> QFrame* {
         auto* card = new QFrame(this);
-        card->setStyleSheet("background-color: #121622; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px 18px;");
+        card->setObjectName("UrlCard");
+        card->setStyleSheet(
+            "QFrame#UrlCard { background-color: #141824; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }"
+            "QFrame#UrlCard QLabel { background: transparent; border: none; }"
+        );
         auto* layout = new QVBoxLayout(card);
-        layout->setSpacing(8);
+        layout->setContentsMargins(14, 12, 14, 12);
+        layout->setSpacing(6);
 
         auto* lTitle = new QLabel(title, card);
-        lTitle->setStyleSheet("font-size: 14px; font-weight: 700; color: #F1F5F9;");
+        lTitle->setStyleSheet("font-size: 13px; font-weight: 700; color: #F1F5F9;");
         auto* lDesc = new QLabel(desc, card);
-        lDesc->setStyleSheet("font-size: 12px; color: #94A3B8;");
+        lDesc->setStyleSheet("font-size: 11px; color: #94A3B8;");
+        lDesc->setWordWrap(true);
 
         auto* inputRow = new QHBoxLayout();
         inputRow->setSpacing(8);
 
         txtOut = new QLineEdit(card);
         txtOut->setReadOnly(true);
-        txtOut->setStyleSheet("background: #0B0E14; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; color: #38BDF8; font-family: monospace; font-size: 13px; font-weight: 600;");
+        txtOut->setFixedHeight(34);
+        txtOut->setStyleSheet("QLineEdit { background: #0B0E14; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 2px 10px; color: #38BDF8; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; font-weight: 600; }");
 
         btnCopyOut = new QPushButton("Copiar", card);
         btnCopyOut->setCursor(Qt::PointingHandCursor);
-        btnCopyOut->setStyleSheet("QPushButton { background: #334155; color: #FFF; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: none; } QPushButton:hover { background: #475569; }");
+        btnCopyOut->setFixedHeight(34);
+        btnCopyOut->setStyleSheet("QPushButton { background: #334155; color: #FFF; font-size: 11px; font-weight: 600; padding: 0 14px; border-radius: 6px; border: none; } QPushButton:hover { background: #475569; }");
 
         inputRow->addWidget(txtOut, 1);
         inputRow->addWidget(btnCopyOut);
 
         if (btnOpen)
         {
+            btnOpen->setFixedHeight(34);
             inputRow->addWidget(btnOpen);
         }
 
@@ -141,11 +159,11 @@ void WebServerWidget::setupUi()
     // Card 2: Local PC Access
     m_btnOpenLocal = new QPushButton("Abrir en Navegador", this);
     m_btnOpenLocal->setCursor(Qt::PointingHandCursor);
-    m_btnOpenLocal->setStyleSheet("QPushButton { background: #4F46E5; color: #FFF; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: none; } QPushButton:hover { background: #4338CA; }");
+    m_btnOpenLocal->setStyleSheet("QPushButton { background: #4F46E5; color: #FFF; font-size: 11px; font-weight: 600; padding: 0 14px; border-radius: 6px; border: none; } QPushButton:hover { background: #4338CA; }");
     connect(m_btnOpenLocal, &QPushButton::clicked, this, &WebServerWidget::onOpenLocalUrlClicked);
 
     auto* cardLocal = createUrlCard(
-        "💻 Acceso Local (Este PC)",
+        "Acceso Local (Este PC)",
         "Abre el chat unificado directamente en una pestaña de tu navegador (Chrome, Edge, Firefox, Brave).",
         m_txtLocalUrl,
         m_btnCopyLocal,
@@ -156,7 +174,7 @@ void WebServerWidget::setupUi()
 
     // Card 3: Mobile Network Access
     auto* cardNetwork = createUrlCard(
-        "📱 Acceso Móvil / Red Wi-Fi",
+        "Acceso Móvil / Red Wi-Fi",
         "Abre esta dirección en el navegador de tu teléfono móvil o tablet (conectado a la misma red Wi-Fi).",
         m_txtNetworkUrl,
         m_btnCopyNetwork
@@ -166,7 +184,7 @@ void WebServerWidget::setupUi()
 
     // Card 4: OBS Overlay
     auto* cardOverlay = createUrlCard(
-        "🎬 Overlay Transparente para OBS Studio",
+        "Overlay Transparente para OBS Studio",
         "Añade una fuente de Navegador en OBS Studio con este enlace y fondo transparente para mostrar el chat en tu directo.",
         m_txtOverlayUrl,
         m_btnCopyOverlay
@@ -183,19 +201,19 @@ void WebServerWidget::updateUiState()
 
     if (running)
     {
-        m_lblStatusBadge->setText(QString("🟢 ACTIVO EN PUERTO %1").arg(LocalWebServer::instance().httpPort()));
-        m_lblStatusBadge->setStyleSheet("background: rgba(16, 185, 129, 0.15); color: #34D399; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 9999px; border: 1px solid rgba(16, 185, 129, 0.3);");
+        m_lblStatusBadge->setText(QString("● SERVIDOR ACTIVO (PUERTO %1)").arg(LocalWebServer::instance().httpPort()));
+        m_lblStatusBadge->setStyleSheet("background: rgba(16, 185, 129, 0.15); color: #34D399; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 9999px; border: 1px solid rgba(16, 185, 129, 0.3);");
         m_btnToggleServer->setText("DETENER SERVIDOR");
-        m_btnToggleServer->setStyleSheet("QPushButton { background: #DC2626; color: #FFF; font-weight: 700; font-size: 13px; padding: 8px 18px; border-radius: 8px; border: none; } QPushButton:hover { background: #B91C1C; }");
+        m_btnToggleServer->setStyleSheet("QPushButton { background: #DC2626; color: #FFF; font-weight: 700; font-size: 12px; padding: 0 16px; border-radius: 6px; border: none; } QPushButton:hover { background: #B91C1C; }");
         m_spinHttpPort->setEnabled(false);
         m_spinWsPort->setEnabled(false);
     }
     else
     {
-        m_lblStatusBadge->setText("🔴 SERVIDOR DETENIDO");
-        m_lblStatusBadge->setStyleSheet("background: rgba(239, 68, 68, 0.15); color: #F87171; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 9999px; border: 1px solid rgba(239, 68, 68, 0.3);");
+        m_lblStatusBadge->setText("● SERVIDOR DETENIDO");
+        m_lblStatusBadge->setStyleSheet("background: rgba(239, 68, 68, 0.15); color: #F87171; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 9999px; border: 1px solid rgba(239, 68, 68, 0.3);");
         m_btnToggleServer->setText("INICIAR SERVIDOR WEB");
-        m_btnToggleServer->setStyleSheet("QPushButton { background: #2563EB; color: #FFF; font-weight: 700; font-size: 13px; padding: 8px 18px; border-radius: 8px; border: none; } QPushButton:hover { background: #1D4ED8; }");
+        m_btnToggleServer->setStyleSheet("QPushButton { background: #2563EB; color: #FFF; font-weight: 700; font-size: 12px; padding: 0 16px; border-radius: 6px; border: none; } QPushButton:hover { background: #1D4ED8; }");
         m_spinHttpPort->setEnabled(true);
         m_spinWsPort->setEnabled(true);
     }

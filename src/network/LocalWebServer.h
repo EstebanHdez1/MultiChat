@@ -13,6 +13,8 @@
 #include <QJsonArray>
 #include "ChatMessage.h"
 #include "PlatformStatus.h"
+#include "AppStyleConfig.h"
+#include "ChatManager.h"
 
 class LocalWebServer : public QObject
 {
@@ -42,6 +44,9 @@ signals:
 
 public slots:
     void onChatMessageReceived(const ChatMessage& msg, bool allowed);
+    void onChatCleared();
+    void onFilterChanged(const ChatFilter& filter);
+    void onStyleChanged(const AppStyleConfig& style);
     void onViewerCountUpdated(const QString& platform, int count, int total);
     void onPlatformStatusChanged(const QString& platform, PlatformStatus status, const QString& detail);
 
@@ -58,6 +63,8 @@ private:
     void broadcastJson(const QJsonObject& json);
     QByteArray getIndexHtml() const;
     QJsonObject messageToJson(const ChatMessage& msg) const;
+    QJsonObject styleToJson(const AppStyleConfig& style) const;
+    QJsonObject filterToJson(const ChatFilter& filter) const;
 
     QTcpServer* m_httpServer = nullptr;
     QWebSocketServer* m_wsServer = nullptr;
