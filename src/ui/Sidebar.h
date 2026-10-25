@@ -19,6 +19,8 @@ public:
     void setCurrentPage(int index);
     void updatePlatformStatus(const QString& platform, PlatformStatus status);
     void updateTotalViewers(int total);
+    bool isCollapsed() const { return m_isCollapsed; }
+    void setCollapsed(bool collapsed);
 
 signals:
     void pageSelected(int index);

@@ -29,6 +29,9 @@ private slots:
     void onPlatformStatusChanged(const QString& platform, PlatformStatus status, const QString& detail);
     void onViewerCountUpdated(const QString& platform, int count, int total);
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     void setupUi();
     void applyTheme(const AppStyleConfig& style);

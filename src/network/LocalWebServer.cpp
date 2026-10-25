@@ -360,16 +360,14 @@ QByteArray LocalWebServer::getIndexHtml() const
     :root {
       --bg-primary: #0A0D14;
       --bg-surface: #121622;
-      --bg-card: rgba(23, 28, 42, 0.7);
       --border-subtle: rgba(255, 255, 255, 0.08);
-      --border-card: rgba(255, 255, 255, 0.06);
       --text-main: #F3F4F6;
       --text-muted: #94A3B8;
       --twitch: #9146FF;
       --youtube: #EF4444;
       --kick: #53FC18;
       --tiktok: #FE2C55;
-      --accent: #6366F1;
+      --accent: #3B82F6;
       --success: #10B981;
     }
 
@@ -388,7 +386,7 @@ QByteArray LocalWebServer::getIndexHtml() const
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      font-size: 15px;
+      font-size: 14.5px;
       line-height: 1.45;
     }
 
@@ -396,20 +394,20 @@ QByteArray LocalWebServer::getIndexHtml() const
     body.overlay-mode {
       background: transparent !important;
     }
-    body.overlay-mode header,
-    body.overlay-mode .controls-bar {
+    body.overlay-mode header {
       display: none !important;
     }
     body.overlay-mode .chat-container {
-      padding: 8px 12px;
+      padding: 6px 10px;
       background: transparent;
     }
-    body.overlay-mode .chat-msg {
+    body.overlay-mode .chat-row {
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.7);
+    }
+    body.overlay-mode .chat-row.highlighted {
       background: rgba(10, 13, 20, 0.85);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
     }
 
     /* Modern Header */
@@ -434,12 +432,12 @@ QByteArray LocalWebServer::getIndexHtml() const
     .brand-logo {
       width: 28px;
       height: 28px;
-      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      background: linear-gradient(135deg, #2563EB, #3B82F6);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
     }
     .brand-logo svg {
       width: 16px;
@@ -449,8 +447,8 @@ QByteArray LocalWebServer::getIndexHtml() const
 
     .brand-title {
       font-weight: 700;
-      font-size: 16px;
-      letter-spacing: -0.3px;
+      font-size: 15px;
+      letter-spacing: -0.2px;
       color: #FFF;
       display: flex;
       align-items: center;
@@ -542,153 +540,211 @@ QByteArray LocalWebServer::getIndexHtml() const
       background: rgba(255, 255, 255, 0.12);
     }
     .btn-icon.active {
-      background: var(--accent);
-      border-color: var(--accent);
+      background: #2563EB;
+      border-color: #2563EB;
       color: #FFF;
     }
+    .btn-icon svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
 
-    /* Chat Messages Stream */
+    /* Chat Messages Stream (Inline App Style) */
     .chat-container {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 12px 16px;
+      padding: 10px 14px 40px 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 3px;
       scroll-behavior: smooth;
     }
 
-    .chat-msg {
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-card);
-      border: 1px solid var(--border-card);
-      border-radius: 10px;
-      padding: 8px 12px;
-      animation: slideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    .chat-row {
+      display: block;
+      padding: 2px 4px;
+      line-height: 1.5;
       word-break: break-word;
-      transition: background 0.15s;
+      font-size: 14px;
+      animation: fadeIn 0.15s ease-out;
+      border-radius: 4px;
     }
-    .chat-msg:hover {
-      background: rgba(30, 36, 54, 0.85);
+    .chat-row:hover {
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(6px); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    .msg-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 3px;
-      flex-wrap: wrap;
-    }
-
-    .badge-platform {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 2px 6px;
-      border-radius: 5px;
-      letter-spacing: 0.3px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .badge-platform.twitch { background: rgba(145, 70, 255, 0.2); color: #C084FC; border: 1px solid rgba(145, 70, 255, 0.35); }
-    .badge-platform.youtube { background: rgba(239, 68, 68, 0.2); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.35); }
-    .badge-platform.kick { background: rgba(83, 252, 24, 0.2); color: #86EFAC; border: 1px solid rgba(83, 252, 24, 0.35); }
-    .badge-platform.tiktok { background: rgba(254, 44, 85, 0.2); color: #FDA4AF; border: 1px solid rgba(254, 44, 85, 0.35); }
 
     .msg-time {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       color: #64748B;
+      margin-right: 6px;
+    }
+
+    .badge-platform {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      margin-right: 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1px;
+    }
+    .badge-platform svg {
+      width: 13px;
+      height: 13px;
+      display: block;
     }
 
     .msg-user {
       font-weight: 700;
-      font-size: 14px;
-      letter-spacing: -0.2px;
+      margin-right: 6px;
+      letter-spacing: -0.1px;
     }
 
-    .msg-content {
-      font-size: 14.5px;
+    .msg-body {
       color: #E2E8F0;
-      line-height: 1.4;
     }
-    .msg-content img {
-      height: 22px;
+    .msg-body img {
+      height: 20px;
       vertical-align: middle;
       margin: 0 2px;
     }
 
-    /* Highlight Card: Donations & Gifts */
-    .chat-msg.donation {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08));
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      border-left: 4px solid #F59E0B;
+    /* Highlighted Messages (Donations, Subs, Gifts) */
+    .chat-row.donation {
+      background: rgba(245, 158, 11, 0.12);
+      border-left: 3px solid #F59E0B;
+      padding: 5px 8px;
+      margin: 3px 0;
+      border-radius: 4px;
     }
-    .chat-msg.gift {
-      background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(219, 39, 119, 0.08));
-      border: 1px solid rgba(236, 72, 153, 0.4);
-      border-left: 4px solid #EC4899;
+    .chat-row.subscription {
+      background: rgba(145, 70, 255, 0.12);
+      border-left: 3px solid #9146FF;
+      padding: 5px 8px;
+      margin: 3px 0;
+      border-radius: 4px;
     }
-    .donation-pill {
+    .chat-row.gift {
+      background: rgba(254, 44, 85, 0.12);
+      border-left: 3px solid #FE2C55;
+      padding: 5px 8px;
+      margin: 3px 0;
+      border-radius: 4px;
+    }
+
+    .pill-highlight {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       font-weight: 700;
-      font-size: 13px;
-      color: #FCD34D;
-      background: rgba(245, 158, 11, 0.2);
-      padding: 2px 8px;
-      border-radius: 9999px;
+      font-size: 12.5px;
+      padding: 1px 6px;
+      border-radius: 4px;
       margin-right: 6px;
+      vertical-align: middle;
+    }
+    .pill-highlight svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+    .pill-highlight.donation {
+      color: #FBBF24;
+      background: rgba(245, 158, 11, 0.2);
+    }
+    .pill-highlight.subscription {
+      color: #C084FC;
+      background: rgba(145, 70, 255, 0.2);
+    }
+    .pill-highlight.gift {
+      color: #FDA4AF;
+      background: rgba(254, 44, 85, 0.2);
     }
 
-    /* Transient Notifications (Likes, Joins, Follows) */
-    .transient-toast {
-      background: rgba(30, 41, 59, 0.9);
-      border: 1px solid var(--border-subtle);
-      border-left: 4px solid var(--accent);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 12.5px;
-      color: #CBD5E1;
+    /* Dedicated Bottom Live Events Dock */
+    .events-dock {
+      position: fixed;
+      bottom: 12px;
+      left: 14px;
+      right: 14px;
       display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: fadeInOut 4s forwards;
+      flex-direction: column-reverse;
+      gap: 5px;
+      pointer-events: none;
+      z-index: 100;
     }
-    @keyframes fadeInOut {
-      0% { opacity: 0; transform: translateY(-4px); }
-      8% { opacity: 1; transform: translateY(0); }
-      88% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-4px); }
+
+    .event-toast {
+      align-self: flex-start;
+      background: rgba(22, 27, 38, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      padding: 4px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      color: #E2E8F0;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      animation: slideUpFade 3.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      pointer-events: auto;
+    }
+    .event-toast svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      fill: currentColor;
+    }
+    .event-toast.join { border-left: 3px solid #38BDF8; color: #E0F2FE; }
+    .event-toast.join svg { fill: #38BDF8; }
+    .event-toast.share { border-left: 3px solid #34D399; color: #D1FAE5; }
+    .event-toast.share svg { fill: #34D399; }
+    .event-toast.follow { border-left: 3px solid #F472B6; color: #FCE7F3; }
+    .event-toast.follow svg { fill: #F472B6; }
+    .event-toast.like { border-left: 3px solid #F87171; color: #FEE2E2; }
+    .event-toast.like svg { fill: #F87171; }
+
+    @keyframes slideUpFade {
+      0% { opacity: 0; transform: translateY(12px) scale(0.96); }
+      10% { opacity: 1; transform: translateY(0) scale(1); }
+      85% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-8px); }
     }
 
     /* Scroll button pill */
     .scroll-btn {
       position: absolute;
-      bottom: 16px;
-      right: 16px;
-      background: #4F46E5;
+      bottom: 20px;
+      right: 20px;
+      background: #2563EB;
       color: #FFF;
-      padding: 8px 14px;
+      padding: 7px 12px;
       border-radius: 9999px;
       font-size: 12px;
       font-weight: 600;
       border: none;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
       cursor: pointer;
       display: none;
       align-items: center;
       gap: 6px;
       z-index: 20;
+    }
+    .scroll-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
     }
     .scroll-btn.visible {
       display: inline-flex;
@@ -717,13 +773,20 @@ QByteArray LocalWebServer::getIndexHtml() const
     </div>
 
     <div class="header-actions">
-      <button class="btn-icon active" id="btnAutoScroll" title="Auto-scroll activado">⬇ Scroll</button>
+      <button class="btn-icon active" id="btnAutoScroll" title="Auto-scroll activado">
+        <svg viewBox="0 0 24 24"><path d="M11 4h2v12l4-4 1.4 1.4L12 20l-6.4-6.6L7 12l4 4V4z"/></svg>
+        Scroll
+      </button>
       <button class="btn-icon" id="btnOverlayMode" title="Alternar modo OBS Overlay">OBS</button>
     </div>
   </header>
 
   <div class="chat-container" id="chatContainer"></div>
-  <button class="scroll-btn" id="btnScrollBottom">⬇ Nuevos mensajes</button>
+  <div class="events-dock" id="eventsDock"></div>
+  <button class="scroll-btn" id="btnScrollBottom">
+    <svg viewBox="0 0 24 24"><path d="M11 4h2v12l4-4 1.4 1.4L12 20l-6.4-6.6L7 12l4 4V4z"/></svg>
+    Nuevos mensajes
+  </button>
 
   <script>
     const isOverlay = new URLSearchParams(window.location.search).get('overlay') === 'true' || window.location.pathname.includes('/overlay');
@@ -732,10 +795,27 @@ QByteArray LocalWebServer::getIndexHtml() const
     }
 
     const container = document.getElementById('chatContainer');
+    const eventsDock = document.getElementById('eventsDock');
     const scrollBottomBtn = document.getElementById('btnScrollBottom');
     const btnAutoScroll = document.getElementById('btnAutoScroll');
     const btnOverlayMode = document.getElementById('btnOverlayMode');
     let autoScroll = true;
+
+    // Platform SVG icons
+    const platformSvgs = {
+      twitch: `<svg viewBox="0 0 24 24"><path fill="#9146FF" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>`,
+      youtube: `<svg viewBox="0 0 24 24"><path fill="#EF4444" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+      kick: `<svg viewBox="0 0 24 24"><path fill="#53FC18" d="M4 3h5v5h2V5h2V3h7v6h-3v2h-2v2h2v2h3v6h-7v-2h-2v-3h-2v5H4V3z"/></svg>`,
+      tiktok: `<svg viewBox="0 0 24 24"><path fill="#FE2C55" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>`
+    };
+
+    const actionSvgs = {
+      user: `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`,
+      gift: `<svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.97.54-2.5 1.35l-.5.7-.5-.7C10.97 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1h-2V5c0-.55.45-1 1-1zM9 4c.55 0 1 .45 1 1v1H8c0-.55.45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h7v6h2V8h7v6z"/></svg>`,
+      star: `<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+      heart: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+      share: `<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>`
+    };
 
     // Check auto-scroll toggle
     btnAutoScroll.addEventListener('click', () => {
@@ -834,41 +914,41 @@ QByteArray LocalWebServer::getIndexHtml() const
     }
 
     function appendMessage(msg, animate) {
-      // If transient event (like/follow/join), render as floating toast
+      // If transient event (like/follow/join/share), render in bottom dock
       if (msg.isTransient) {
         renderTransientToast(msg);
         return;
       }
 
-      const div = document.createElement('div');
-      div.className = 'chat-msg';
-      if (msg.isDonation) div.classList.add('donation');
-      if (msg.type === 2) div.classList.add('gift');
+      const row = document.createElement('div');
+      row.className = 'chat-row';
 
-      const platformClass = (msg.platform || 'kick').toLowerCase();
+      const platformKey = (msg.platform || 'kick').toLowerCase();
+      const platformIcon = platformSvgs[platformKey] || platformSvgs.kick;
       const userColor = msg.userColor || '#818CF8';
       const time = msg.formattedTime || '';
 
-      let donationBadge = '';
-      if (msg.isDonation) {
-        donationBadge = `<span class="donation-pill">🎁 ${msg.donationAmount > 0 ? (msg.donationAmount + ' ' + (msg.currency || '')) : ''}</span>`;
+      let highlightBadge = '';
+      if (msg.isDonation || msg.type === 1) {
+        row.classList.add('donation', 'highlighted');
+        const amountStr = msg.donationAmount > 0 ? `${msg.donationAmount.toFixed(2)} ${msg.currency || ''}` : '';
+        highlightBadge = `<span class="pill-highlight donation">${actionSvgs.gift} [${amountStr}]</span> `;
+      } else if (msg.type === 2) {
+        row.classList.add('gift', 'highlighted');
+        highlightBadge = `<span class="pill-highlight gift">${actionSvgs.gift}</span> `;
+      } else if (msg.type === 3) {
+        row.classList.add('subscription', 'highlighted');
+        highlightBadge = `<span class="pill-highlight subscription">${actionSvgs.star}</span> `;
       }
 
-      div.innerHTML = `
-        <div class="msg-header">
-          <span class="badge-platform ${platformClass}">${msg.platform}</span>
-          <span class="msg-user" style="color: ${userColor}">${escapeHtml(msg.displayName || msg.username)}</span>
-          <span class="msg-time">${time}</span>
-        </div>
-        <div class="msg-content">
-          ${donationBadge}${formatMessageText(msg.message, msg.emotes)}
-        </div>
+      row.innerHTML = `
+        <span class="msg-time">[${time}]</span><span class="badge-platform ${platformKey}">${platformIcon}</span><span class="msg-user" style="color: ${userColor}">${escapeHtml(msg.displayName || msg.username)}:</span><span class="msg-body">${highlightBadge}${formatMessageText(msg.message, msg.emotes)}</span>
       `;
 
-      container.appendChild(div);
+      container.appendChild(row);
 
-      // Keep max 100 messages in DOM for performance
-      while (container.children.length > 100) {
+      // Keep max 120 messages in DOM
+      while (container.children.length > 120) {
         container.removeChild(container.firstChild);
       }
 
@@ -879,11 +959,27 @@ QByteArray LocalWebServer::getIndexHtml() const
 
     function renderTransientToast(msg) {
       const toast = document.createElement('div');
-      toast.className = 'transient-toast';
-      toast.innerHTML = `<span>👤</span> <strong>${escapeHtml(msg.displayName)}:</strong> ${escapeHtml(msg.message)}`;
-      container.appendChild(toast);
-      setTimeout(() => { toast.remove(); }, 4000);
-      if (autoScroll) scrollToBottom();
+      let typeClass = 'join';
+      let svgIcon = actionSvgs.user;
+
+      if (msg.type === 5) { // LIKE
+        typeClass = 'like';
+        svgIcon = actionSvgs.heart;
+      } else if (msg.type === 6) { // SHARE
+        typeClass = 'share';
+        svgIcon = actionSvgs.share;
+      } else if (msg.type === 7) { // FOLLOW
+        typeClass = 'follow';
+        svgIcon = actionSvgs.star;
+      }
+
+      toast.className = `event-toast ${typeClass}`;
+      toast.innerHTML = `${svgIcon} <strong>${escapeHtml(msg.displayName)}:</strong> <span>${escapeHtml(msg.message)}</span>`;
+      eventsDock.appendChild(toast);
+
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 3800);
     }
 
     function escapeHtml(str) {

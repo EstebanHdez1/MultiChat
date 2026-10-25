@@ -962,7 +962,7 @@ void TikTokPlatform::parseBinaryProtobuf(const QByteArray& data)
             message.platform = "TikTok";
             message.username = username;
             message.displayName = displayName;
-            message.message = "¡Se ha unido al directo! 👤";
+            message.message = "¡Se ha unido al directo!";
             message.timestamp = QDateTime::currentDateTime();
             message.userColor = "#FE2C55";
             message.type = MessageType::JOIN;
@@ -1004,12 +1004,12 @@ void TikTokPlatform::parseBinaryProtobuf(const QByteArray& data)
             if (action == 1)
             {
                 message.type = MessageType::FOLLOW;
-                message.message = "¡Ha comenzado a seguir al streamer! ➕";
+                message.message = "¡Ha comenzado a seguir al streamer!";
             }
             else
             {
                 message.type = MessageType::SHARE;
-                message.message = "¡Ha compartido el directo! 🚀";
+                message.message = "¡Ha compartido el directo!";
             }
             emitChatMessage(message);
         }
@@ -1167,7 +1167,7 @@ void TikTokPlatform::handleMemberMessage(const QJsonObject& msgObj)
     msg.platform = "TikTok";
     msg.displayName = user["nickname"].toString(user["display_id"].toString("TikToker"));
     msg.username = user["display_id"].toString(msg.displayName);
-    msg.message = "¡Se ha unido al directo! 👤";
+    msg.message = "¡Se ha unido al directo!";
     msg.timestamp = QDateTime::currentDateTime();
     msg.userColor = "#FE2C55";
     msg.type = MessageType::JOIN;
@@ -1200,12 +1200,12 @@ void TikTokPlatform::handleSocialMessage(const QJsonObject& msgObj)
     if (action == 1)
     {
         msg.type = MessageType::FOLLOW;
-        msg.message = "¡Ha comenzado a seguir al streamer! ➕";
+        msg.message = "¡Ha comenzado a seguir al streamer!";
     }
     else
     {
         msg.type = MessageType::SHARE;
-        msg.message = "¡Ha compartido el directo! 🚀";
+        msg.message = "¡Ha compartido el directo!";
     }
 
     emitChatMessage(msg);
@@ -1242,11 +1242,11 @@ void TikTokPlatform::handleLikeMessage(const QJsonObject& msgObj)
     msg.username = username;
     if (cfg.showLikeCount && count > 0)
     {
-        msg.message = QString("¡ha enviado %1 likes! ❤️").arg(count);
+        msg.message = QString("¡ha enviado %1 likes!").arg(count);
     }
     else
     {
-        msg.message = "¡dio like al directo! ❤️";
+        msg.message = "¡dio like al directo!";
     }
     msg.timestamp = QDateTime::currentDateTime();
     msg.userColor = "#FE2C55";

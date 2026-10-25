@@ -127,10 +127,14 @@ void GeneralSettingsWidget::setupUi()
 
     // Checkboxes for individual transient event types
     auto* checkGrid = new QHBoxLayout();
-    m_chkShowJoins = new QCheckBox("Uniones (👤)", eventsFrame);
-    m_chkShowShares = new QCheckBox("Compartidos (🚀)", eventsFrame);
-    m_chkShowFollows = new QCheckBox("Seguidores (➕)", eventsFrame);
-    m_chkShowLikes = new QCheckBox("Likes (❤️)", eventsFrame);
+    m_chkShowJoins = new QCheckBox("Uniones", eventsFrame);
+    m_chkShowJoins->setIcon(QIcon(":/icons/user.svg"));
+    m_chkShowShares = new QCheckBox("Compartidos", eventsFrame);
+    m_chkShowShares->setIcon(QIcon(":/icons/share.svg"));
+    m_chkShowFollows = new QCheckBox("Seguidores", eventsFrame);
+    m_chkShowFollows->setIcon(QIcon(":/icons/star.svg"));
+    m_chkShowLikes = new QCheckBox("Likes", eventsFrame);
+    m_chkShowLikes->setIcon(QIcon(":/icons/heart.svg"));
 
     auto styleChk = [](QCheckBox* c) {
         c->setChecked(true);

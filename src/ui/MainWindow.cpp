@@ -39,8 +39,8 @@ MainWindow::MainWindow(QWidget* parent)
 void MainWindow::setupUi()
 {
     setWindowTitle("MultiChat - Unified Live Stream Chat");
-    resize(1180, 760);
-    setMinimumSize(880, 560);
+    resize(1120, 720);
+    setMinimumSize(400, 360);
 
     auto* centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
@@ -63,6 +63,15 @@ void MainWindow::setupUi()
     m_stackedWidget->addWidget(m_logsWidget);       // 7
 
     mainLayout->addWidget(m_stackedWidget, 1);
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    if (width() < 640 && !m_sidebar->isCollapsed())
+    {
+        m_sidebar->setCollapsed(true);
+    }
 }
 
 void MainWindow::onPageSelected(int index)
@@ -98,21 +107,57 @@ void MainWindow::applyTheme(const AppStyleConfig& style)
         "QMainWindow, QWidget#SidebarWidget, QWidget#qt_scrollarea_viewport {"
         "  background-color: %1;"
         "}"
+        "QWidget {"
+        "  color: #E2E8F0;"
+        "}"
+        "QLineEdit, QSpinBox, QComboBox {"
+        "  background-color: #1A1D27;"
+        "  border: 1px solid rgba(255, 255, 255, 0.08);"
+        "  border-radius: 6px;"
+        "  padding: 6px 10px;"
+        "  color: #F8FAFC;"
+        "  selection-background-color: #3B82F6;"
+        "}"
+        "QLineEdit:focus, QSpinBox:focus, QComboBox:focus {"
+        "  border: 1px solid #3B82F6;"
+        "  background-color: #1E2230;"
+        "}"
+        "QToolTip {"
+        "  background-color: #1F2430;"
+        "  color: #F8FAFC;"
+        "  border: 1px solid rgba(255, 255, 255, 0.15);"
+        "  border-radius: 4px;"
+        "  padding: 4px 8px;"
+        "  font-size: 11px;"
+        "}"
         "QScrollBar:vertical {"
-        "  background: #111827;"
-        "  width: 8px;"
+        "  background: #0F1219;"
+        "  width: 7px;"
         "  margin: 0px;"
         "}"
         "QScrollBar::handle:vertical {"
-        "  background: #374151;"
-        "  min-height: 20px;"
-        "  border-radius: 4px;"
+        "  background: #2D3748;"
+        "  min-height: 24px;"
+        "  border-radius: 3px;"
         "}"
         "QScrollBar::handle:vertical:hover {"
-        "  background: #4B5563;"
+        "  background: #4A5568;"
         "}"
         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
         "  height: 0px;"
+        "}"
+        "QScrollBar:horizontal {"
+        "  background: #0F1219;"
+        "  height: 7px;"
+        "  margin: 0px;"
+        "}"
+        "QScrollBar::handle:horizontal {"
+        "  background: #2D3748;"
+        "  min-width: 24px;"
+        "  border-radius: 3px;"
+        "}"
+        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {"
+        "  width: 0px;"
         "}"
     ).arg(bg));
 }

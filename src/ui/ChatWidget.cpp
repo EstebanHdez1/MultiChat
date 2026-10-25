@@ -8,6 +8,8 @@
 #include <QBuffer>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QMenu>
+#include <QAction>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QTextDocument>
@@ -167,41 +169,31 @@ void ChatWidget::setupUi()
     });
     filterLayout->addWidget(m_btnOpenWeb);
 
-    m_btnSimulate = new QPushButton("Test Msg", filterBar);
+    m_btnSimulate = new QPushButton("Simular", filterBar);
     m_btnSimulate->setIcon(QIcon(":/icons/dice.svg"));
-    m_btnSimulate->setIconSize(QSize(12, 12));
-    m_btnSimulate->setToolTip("Simula un mensaje de chat normal de cualquiera de las 4 plataformas");
+    m_btnSimulate->setIconSize(QSize(13, 13));
+    m_btnSimulate->setToolTip("Simular mensajes, donaciones y eventos de directo");
     m_btnSimulate->setCursor(Qt::PointingHandCursor);
-    m_btnSimulate->setStyleSheet("QPushButton { background: #4B5563; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; } QPushButton:hover { background: #6B7280; }");
-    connect(m_btnSimulate, &QPushButton::clicked, this, &ChatWidget::onSimulateMessageClicked);
+    m_btnSimulate->setStyleSheet(
+        "QPushButton { background: #374151; color: #E5E7EB; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 500; }"
+        "QPushButton:hover { background: #4B5563; }"
+    );
+    auto* simMenu = new QMenu(m_btnSimulate);
+    simMenu->setStyleSheet(
+        "QMenu { background-color: #1F2937; color: #F3F4F6; border: 1px solid #374151; border-radius: 6px; padding: 4px; }"
+        "QMenu::item { padding: 6px 14px; border-radius: 4px; font-size: 11px; }"
+        "QMenu::item:selected { background-color: #2563EB; }"
+    );
+    auto* actMsg = simMenu->addAction(QIcon(":/icons/chat.svg"), "Simular Mensaje");
+    connect(actMsg, &QAction::triggered, this, &ChatWidget::onSimulateMessageClicked);
+    auto* actDon = simMenu->addAction(QIcon(":/icons/gift.svg"), "Simular Donación");
+    connect(actDon, &QAction::triggered, this, &ChatWidget::onSimulateDonationClicked);
+    auto* actEvt = simMenu->addAction(QIcon(":/icons/bolt.svg"), "Simular Evento Live");
+    connect(actEvt, &QAction::triggered, this, &ChatWidget::onSimulateEventClicked);
+    m_btnSimulate->setMenu(simMenu);
     filterLayout->addWidget(m_btnSimulate);
 
-    m_btnSimulateDonation = new QPushButton("+ Donación Test", filterBar);
-    m_btnSimulateDonation->setIcon(QIcon(":/icons/trophy.svg"));
-    m_btnSimulateDonation->setIconSize(QSize(12, 12));
-    m_btnSimulateDonation->setToolTip("Genera una donación o Super Chat de prueba para verificar alertas y ranking");
-    m_btnSimulateDonation->setCursor(Qt::PointingHandCursor);
-    m_btnSimulateDonation->setStyleSheet("QPushButton { background: #D97706; color: white; font-weight: bold; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; } QPushButton:hover { background: #B45309; }");
-    connect(m_btnSimulateDonation, &QPushButton::clicked, this, &ChatWidget::onSimulateDonationClicked);
-    filterLayout->addWidget(m_btnSimulateDonation);
-
-    m_btnSimulateEvent = new QPushButton("+ Evento Test", filterBar);
-    m_btnSimulateEvent->setIcon(QIcon(":/icons/bolt.svg"));
-    m_btnSimulateEvent->setIconSize(QSize(12, 12));
-    m_btnSimulateEvent->setToolTip("Simula un evento temporal (usuario uniéndose, compartiendo o dando like)");
-    m_btnSimulateEvent->setCursor(Qt::PointingHandCursor);
-    m_btnSimulateEvent->setStyleSheet("QPushButton { background: #4338CA; color: white; font-weight: bold; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; } QPushButton:hover { background: #3730A3; }");
-    connect(m_btnSimulateEvent, &QPushButton::clicked, this, &ChatWidget::onSimulateEventClicked);
-    filterLayout->addWidget(m_btnSimulateEvent);
-
     mainLayout->addWidget(m_filterBar);
-
-    // Transient Notifications Container (Floating Pill Banner)
-    m_transientContainer->setStyleSheet("background: transparent; border: none;");
-    m_transientLayout->setContentsMargins(0, 0, 0, 0);
-    m_transientLayout->setSpacing(4);
-    m_transientContainer->hide();
-    mainLayout->addWidget(m_transientContainer);
 
     // Chat Browser
     m_chatBrowser->setOpenExternalLinks(true);
@@ -216,6 +208,13 @@ void ChatWidget::setupUi()
         "}"
     );
     mainLayout->addWidget(m_chatBrowser, 1);
+
+    // Transient Notifications Container (Placed at bottom, below chat)
+    m_transientContainer->setStyleSheet("background: transparent; border: none;");
+    m_transientLayout->setContentsMargins(0, 0, 0, 0);
+    m_transientLayout->setSpacing(4);
+    m_transientContainer->hide();
+    mainLayout->addWidget(m_transientContainer);
 }
 
 void ChatWidget::applyStyle(const AppStyleConfig& style)
@@ -279,28 +278,29 @@ void ChatWidget::appendMessage(const ChatMessage& msg, bool passesFilter)
 void ChatWidget::showTransientEvent(const ChatMessage& msg)
 {
     QString accentColor = "#FE2C55";
-    QString iconBadge = "👤";
+    QString actionIconPath = ":/icons/user.svg";
 
     switch (msg.type)
     {
     case MessageType::JOIN:
         accentColor = "#3B82F6";
-        iconBadge = "👤";
+        actionIconPath = ":/icons/user.svg";
         break;
     case MessageType::SHARE:
         accentColor = "#10B981";
-        iconBadge = "🚀";
+        actionIconPath = ":/icons/share.svg";
         break;
     case MessageType::FOLLOW:
         accentColor = "#EC4899";
-        iconBadge = "➕";
+        actionIconPath = ":/icons/star.svg";
         break;
     case MessageType::LIKE:
         accentColor = "#EF4444";
-        iconBadge = "❤️";
+        actionIconPath = ":/icons/heart.svg";
         break;
     default:
         accentColor = msg.userColor.isEmpty() ? "#FE2C55" : msg.userColor;
+        actionIconPath = ":/icons/bolt.svg";
         break;
     }
 
@@ -329,6 +329,11 @@ void ChatWidget::showTransientEvent(const ChatMessage& msg)
     auto* logoLabel = new QLabel(toast);
     logoLabel->setPixmap(QIcon(iconPath).pixmap(14, 14));
     toastLayout->addWidget(logoLabel);
+
+    // Event action icon
+    auto* actionIcon = new QLabel(toast);
+    actionIcon->setPixmap(QIcon(actionIconPath).pixmap(14, 14));
+    toastLayout->addWidget(actionIcon);
 
     // Text content
     auto* textLabel = new QLabel(toast);
@@ -532,10 +537,11 @@ QString ChatWidget::formatMessageHtml(const ChatMessage& msg)
     {
         if (m_style.showDonationHighlights)
         {
-            containerStyle = "background-color: rgba(245, 158, 11, 0.15); padding: 6px 10px; border-radius: 6px; margin: 3px 0; border-left: 3px solid #F59E0B;";
+            containerStyle = "background-color: rgba(245, 158, 11, 0.15); padding: 5px 10px; border-radius: 6px; margin: 3px 0; border-left: 3px solid #F59E0B;";
         }
-        bodyHtml = QString("<span style=\"color: #FBBF24; font-weight: bold;\"> [%1 %2] </span> <span style=\"color: #FFFFFF;\">%3</span>")
-            .arg(QString::number(msg.donationAmount, 'f', 2), msg.currency.toHtmlEscaped(), formatMessageBodyHtml(msg));
+        QString giftUri = platformLogoDataUri(":/icons/gift.svg");
+        bodyHtml = QString("<img src=\"%1\" width=\"13\" height=\"13\" style=\"vertical-align: middle; margin-right: 4px;\" /><span style=\"color: #FBBF24; font-weight: bold;\">[%2 %3]</span> <span style=\"color: #FFFFFF;\">%4</span>")
+            .arg(giftUri, QString::number(msg.donationAmount, 'f', 2), msg.currency.toHtmlEscaped(), formatMessageBodyHtml(msg));
     }
     else if (msg.type == MessageType::SUBSCRIPTION)
     {
@@ -543,8 +549,9 @@ QString ChatWidget::formatMessageHtml(const ChatMessage& msg)
         {
             containerStyle = "background-color: rgba(145, 70, 255, 0.15); padding: 5px 8px; border-radius: 4px; margin: 2px 0; border-left: 3px solid #9146FF;";
         }
-        bodyHtml = QString("<span style=\"color: #C084FC; font-weight: bold;\"> ⭐ %1</span>")
-            .arg(formatMessageBodyHtml(msg));
+        QString starUri = platformLogoDataUri(":/icons/star.svg");
+        bodyHtml = QString("<img src=\"%1\" width=\"13\" height=\"13\" style=\"vertical-align: middle; margin-right: 4px;\" /><span style=\"color: #C084FC; font-weight: bold;\">%2</span>")
+            .arg(starUri, formatMessageBodyHtml(msg));
     }
     else if (msg.type == MessageType::GIFT)
     {
@@ -552,8 +559,9 @@ QString ChatWidget::formatMessageHtml(const ChatMessage& msg)
         {
             containerStyle = "background-color: rgba(254, 44, 85, 0.15); padding: 5px 8px; border-radius: 4px; margin: 2px 0; border-left: 3px solid #FE2C55;";
         }
-        bodyHtml = QString("<span style=\"color: #FDA4AF; font-weight: bold;\"> 🎁 %1</span>")
-            .arg(formatMessageBodyHtml(msg));
+        QString giftUri = platformLogoDataUri(":/icons/gift.svg");
+        bodyHtml = QString("<img src=\"%1\" width=\"13\" height=\"13\" style=\"vertical-align: middle; margin-right: 4px;\" /><span style=\"color: #FDA4AF; font-weight: bold;\">%2</span>")
+            .arg(giftUri, formatMessageBodyHtml(msg));
     }
     else
     {
@@ -634,7 +642,7 @@ void ChatWidget::onSimulateMessageClicked()
         "Saludos desde Colombia y México!",
         "jajaja no puede ser eso estuvo cerca",
         "Suban el volumen del juego porfa",
-        "Llegué justo a tiempo 🔥"
+        "Llegué justo a tiempo"
     };
 
     int pIdx = QRandomGenerator::global()->bounded(platforms.size());
@@ -665,9 +673,9 @@ void ChatWidget::onSimulateDonationClicked()
     static const QStringList messages = {
         "¡Sigue así crack! Gran directo.",
         "Un saludo especial para la comunidad.",
-        "Para la pizza del streamer 🍕",
+        "Para la pizza del streamer",
         "Tremenda transmisión, un abrazo.",
-        "El mejor directo del día 🔥"
+        "El mejor directo del día"
     };
 
     int pIdx = QRandomGenerator::global()->bounded(platforms.size());
@@ -762,28 +770,28 @@ void ChatWidget::onSimulateEventClicked()
     if (typeChoice == 0)
     {
         msg.type = MessageType::JOIN;
-        msg.message = "¡Se ha unido al directo! 👤";
+        msg.message = "¡Se ha unido al directo!";
     }
     else if (typeChoice == 1)
     {
         msg.type = MessageType::SHARE;
-        msg.message = "¡Ha compartido el directo! 🚀";
+        msg.message = "¡Ha compartido el directo!";
     }
     else if (typeChoice == 2)
     {
         msg.type = MessageType::FOLLOW;
-        msg.message = "¡Ha comenzado a seguir al streamer! ➕";
+        msg.message = "¡Ha comenzado a seguir al streamer!";
     }
     else
     {
         msg.type = MessageType::LIKE;
         if (m_style.showLikeCount)
         {
-            msg.message = QString("¡ha enviado %1 likes! ❤️").arg(QRandomGenerator::global()->bounded(5, 50));
+            msg.message = QString("¡ha enviado %1 likes!").arg(QRandomGenerator::global()->bounded(5, 50));
         }
         else
         {
-            msg.message = "¡dio like al directo! ❤️";
+            msg.message = "¡dio like al directo!";
         }
     }
 

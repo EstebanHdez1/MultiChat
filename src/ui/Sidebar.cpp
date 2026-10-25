@@ -14,24 +14,29 @@ Sidebar::Sidebar(QWidget* parent)
 void Sidebar::setupUi()
 {
     setObjectName("SidebarWidget");
-    setFixedWidth(240);
+    setFixedWidth(220);
 
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 16, 12, 16);
-    mainLayout->setSpacing(8);
+    mainLayout->setContentsMargins(10, 14, 10, 14);
+    mainLayout->setSpacing(6);
 
     // Title / Brand
     auto* brandLayout = new QHBoxLayout();
     auto* brandLogo = new QLabel(this);
-    brandLogo->setPixmap(QIcon(":/icons/bolt.svg").pixmap(22, 22));
+    brandLogo->setPixmap(QIcon(":/icons/bolt.svg").pixmap(20, 20));
     
     m_brandTitle = new QLabel("MULTI-CHAT", this);
-    m_brandTitle->setStyleSheet("font-size: 16px; font-weight: bold; color: #FFFFFF; letter-spacing: 1.5px;");
-    m_btnCollapse = new QPushButton("‹", this);
+    m_brandTitle->setStyleSheet("font-size: 15px; font-weight: 800; color: #FFFFFF; letter-spacing: 1.2px;");
+    m_btnCollapse = new QPushButton(this);
+    m_btnCollapse->setIcon(QIcon(":/icons/chevron-left.svg"));
+    m_btnCollapse->setIconSize(QSize(16, 16));
     m_btnCollapse->setToolTip("Contraer menú lateral");
     m_btnCollapse->setCursor(Qt::PointingHandCursor);
-    m_btnCollapse->setFixedSize(24, 24);
-    m_btnCollapse->setStyleSheet("QPushButton { color: #CBD5E1; border: none; border-radius: 5px; font-size: 18px; } QPushButton:hover { background: rgba(255,255,255,0.08); }");
+    m_btnCollapse->setFixedSize(28, 28);
+    m_btnCollapse->setStyleSheet(
+        "QPushButton { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; }"
+        "QPushButton:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }"
+    );
     connect(m_btnCollapse, &QPushButton::clicked, this, &Sidebar::onToggleCollapsed);
     brandLayout->addWidget(brandLogo);
     brandLayout->addWidget(m_brandTitle);
@@ -39,7 +44,7 @@ void Sidebar::setupUi()
     brandLayout->addWidget(m_btnCollapse);
     mainLayout->addLayout(brandLayout);
 
-    mainLayout->addSpacing(10);
+    mainLayout->addSpacing(6);
 
     // Navigation buttons
     m_buttonGroup->setExclusive(true);
@@ -181,13 +186,22 @@ void Sidebar::onToggleCollapsed()
     applyCollapsedState();
 }
 
+void Sidebar::setCollapsed(bool collapsed)
+{
+    if (m_isCollapsed != collapsed)
+    {
+        m_isCollapsed = collapsed;
+        applyCollapsedState();
+    }
+}
+
 void Sidebar::applyCollapsedState()
 {
-    setFixedWidth(m_isCollapsed ? 64 : 240);
+    setFixedWidth(m_isCollapsed ? 54 : 220);
     m_brandTitle->setVisible(!m_isCollapsed);
     m_statusFrame->setVisible(!m_isCollapsed);
     m_viewersFrame->setVisible(!m_isCollapsed);
-    m_btnCollapse->setText(m_isCollapsed ? "›" : "‹");
+    m_btnCollapse->setIcon(QIcon(m_isCollapsed ? ":/icons/chevron-right.svg" : ":/icons/chevron-left.svg"));
     m_btnCollapse->setToolTip(m_isCollapsed ? "Expandir menú lateral" : "Contraer menú lateral");
 
     for (QPushButton* button : m_navButtons)
@@ -196,8 +210,8 @@ void Sidebar::applyCollapsedState()
         button->setText(m_isCollapsed ? QString() : fullText);
         button->setToolTip(fullText);
         button->setStyleSheet(m_isCollapsed
-            ? "QPushButton { text-align: center; padding: 10px; border-radius: 8px; border: none; color: #94A3B8; background: transparent; } QPushButton:hover { background: rgba(255,255,255,0.05); color: #F8FAFC; } QPushButton:checked { background: #2563EB; color: #FFFFFF; }"
-            : "QPushButton { text-align: left; padding: 10px 14px; border-radius: 8px; border: none; color: #94A3B8; font-size: 13px; font-weight: 500; background-color: transparent; } QPushButton:hover { background-color: rgba(255, 255, 255, 0.05); color: #F8FAFC; } QPushButton:checked { background-color: #2563EB; color: #FFFFFF; font-weight: bold; }");
+            ? "QPushButton { text-align: center; padding: 10px 0; border-radius: 8px; border: none; color: #94A3B8; background: transparent; } QPushButton:hover { background: rgba(255,255,255,0.06); color: #F8FAFC; } QPushButton:checked { background: #2563EB; color: #FFFFFF; }"
+            : "QPushButton { text-align: left; padding: 9px 12px; border-radius: 8px; border: none; color: #94A3B8; font-size: 13px; font-weight: 500; background-color: transparent; } QPushButton:hover { background-color: rgba(255, 255, 255, 0.05); color: #F8FAFC; } QPushButton:checked { background-color: #2563EB; color: #FFFFFF; font-weight: bold; }");
     }
 
     m_btnConnectAll->setText(m_isCollapsed ? QString() : m_btnConnectAll->property("fullText").toString());

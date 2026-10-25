@@ -22,5 +22,12 @@
         <file>icons/copy.svg</file>
         <file>icons/dice.svg</file>
         <file>icons/filter.svg</file>
+        <file>icons/star.svg</file>
+        <file>icons/gift.svg</file>
+        <file>icons/user.svg</file>
+        <file>icons/heart.svg</file>
+        <file>icons/share.svg</file>
+        <file>icons/chevron-left.svg</file>
+        <file>icons/chevron-right.svg</file>
     </qresource>
 </RCC>

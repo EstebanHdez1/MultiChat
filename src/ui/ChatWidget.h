@@ -68,8 +68,6 @@ private:
     QPushButton* m_btnClear;
     QPushButton* m_btnOpenWeb;
     QPushButton* m_btnSimulate;
-    QPushButton* m_btnSimulateDonation;
-    QPushButton* m_btnSimulateEvent;
     QLabel* m_lblMessageCount;
     QNetworkAccessManager m_emoteNetwork;
     QHash<QString, QImage> m_emoteImages;
